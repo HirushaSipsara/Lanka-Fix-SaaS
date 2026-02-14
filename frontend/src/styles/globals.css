@@ -1,0 +1,25 @@
+/*
+ * globals.css — Global Styles
+ *
+ * This file should contain:
+ * - CSS reset / normalize (box-sizing, margin, padding)
+ * - Root CSS variables for theming:
+ *     --primary-color     (brand color, e.g., #2563eb)
+ *     --secondary-color
+ *     --accent-color
+ *     --bg-color           (background)
+ *     --text-color
+ *     --error-color        (e.g., #ef4444)
+ *     --success-color      (e.g., #22c55e)
+ *     --border-radius
+ *     --font-family        (e.g., 'Inter', sans-serif)
+ * - Base typography styles (body, h1-h6, p, a)
+ * - Utility classes (.container, .flex, .grid, .text-center, etc.)
+ * - Button base styles (.btn, .btn-primary, .btn-secondary, .btn-danger)
+ * - Form element styles (input, select, textarea)
+ * - Responsive breakpoints via media queries
+ *
+ * Purpose:
+ *   Single source of truth for the design system.
+ *   All components should reference these variables for consistency.
+ */
