@@ -1,6 +1,7 @@
 package lk.wedalk.requests.controller;
 
 import jakarta.validation.Valid;
+import lk.wedalk.auth.security.CustomUserDetails;
 import lk.wedalk.common.ApiResponse;
 import lk.wedalk.common.enums.ServiceCategory;
 import lk.wedalk.requests.dto.RequestCreateRequest;
@@ -32,7 +33,7 @@ public class ServiceRequestController {
     public ResponseEntity<ApiResponse<RequestResponse>> createRequest(
             @Valid @RequestBody RequestCreateRequest request,
             Authentication authentication) {
-        Long seekerId = Long.parseLong(authentication.getName());
+        Long seekerId = getCurrentUserId(authentication);
         RequestResponse response = serviceRequestService.createRequest(seekerId, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "Service request created successfully"));
@@ -41,7 +42,7 @@ public class ServiceRequestController {
     @GetMapping("/my")
     @PreAuthorize("hasRole('SEEKER')")
     public ResponseEntity<ApiResponse<List<RequestResponse>>> getMyRequests(Authentication authentication) {
-        Long seekerId = Long.parseLong(authentication.getName());
+        Long seekerId = getCurrentUserId(authentication);
         List<RequestResponse> requests = serviceRequestService.getMyRequests(seekerId);
         return ResponseEntity.ok(ApiResponse.success(requests, "Requests retrieved successfully"));
     }
@@ -67,5 +68,13 @@ public class ServiceRequestController {
             @RequestParam(required = false) ServiceCategory category) {
         List<RequestResponse> requests = serviceRequestService.searchRequests(locationArea, category);
         return ResponseEntity.ok(ApiResponse.success(requests, "Search completed successfully"));
+    }
+
+    /**
+     * Helper method to extract user ID from authentication principal
+     */
+    private Long getCurrentUserId(Authentication authentication) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        return userDetails.getId();
     }
 }
