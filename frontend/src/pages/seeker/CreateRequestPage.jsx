@@ -324,7 +324,7 @@ const CreateRequestPage = () => {
                             </p>
                         </div>
                         <div className="sidebar-footer">
-                            © 2024 SkillLink Lanka Inc.
+                            © 2026 SkillLink Lanka Inc.
                         </div>
                     </div>
 
