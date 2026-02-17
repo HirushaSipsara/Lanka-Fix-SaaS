@@ -35,7 +35,7 @@
  *   ];
  *
  * - API base URL:
- *   export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+ *   export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
  *
  * Purpose:
  *   Single source of truth for all constants used across the frontend.

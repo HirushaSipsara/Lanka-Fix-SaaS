@@ -1,17 +1,9 @@
 package lk.wedalk.users.repository;
 
-/**
- * UserRepository.java — User Data Access Layer
- *
- * This file should contain:
- * - Interface extending JpaRepository<User, Long>
- * - Custom query methods:
- * - Optional<User> findByEmail(String email)
- * - boolean existsByEmail(String email)
- * - List<User> findByRole(Role role)
- * - List<User> findByIsSuspendedTrue()
- *
- * Purpose:
- * Provides CRUD operations and custom queries for the User entity.
- * Spring Data JPA auto-implements these methods based on naming conventions.
- */
+import lk.wedalk.users.model.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+}
