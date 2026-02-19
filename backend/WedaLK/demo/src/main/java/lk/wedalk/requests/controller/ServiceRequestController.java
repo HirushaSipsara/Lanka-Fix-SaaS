@@ -2,6 +2,7 @@ package lk.wedalk.requests.controller;
 
 import jakarta.validation.Valid;
 import lk.wedalk.common.ApiResponse;
+import lk.wedalk.common.PagedResponse;
 import lk.wedalk.common.enums.ServiceCategory;
 import lk.wedalk.requests.dto.RequestCreateRequest;
 import lk.wedalk.requests.dto.RequestResponse;
@@ -48,6 +49,19 @@ public class ServiceRequestController {
     public ResponseEntity<ApiResponse<List<RequestResponse>>> getOpenRequests() {
         List<RequestResponse> requests = serviceRequestService.getOpenRequests();
         return ResponseEntity.ok(ApiResponse.success(requests, "Open requests retrieved successfully"));
+    }
+
+    @GetMapping("/browse")
+    public ResponseEntity<ApiResponse<PagedResponse<RequestResponse>>> browseRequests(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) ServiceCategory category,
+            @RequestParam(required = false) String locationArea,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "9") int size,
+            @RequestParam(defaultValue = "newest") String sortBy) {
+        PagedResponse<RequestResponse> response = serviceRequestService.browseOpenRequests(
+                keyword, category, locationArea, page, size, sortBy);
+        return ResponseEntity.ok(ApiResponse.success(response, "Browse results retrieved successfully"));
     }
 
     @GetMapping("/{id}")

@@ -7,7 +7,7 @@ import LandingPage from './pages/public/LandingPage';
 import CreateRequestPage from './pages/seeker/CreateRequestPage';
 import MyRequestsPage from './pages/seeker/MyRequestsPage';
 import RequestDetailsPage from './pages/seeker/RequestDetailsPage';
-import FindWorkPage from './pages/worker/FindWorkPage';
+import BrowseRequestsPage from './pages/worker/BrowseRequestsPage';
 
 /**
  * App.js — Main Application Component (Simplified)
@@ -25,7 +25,7 @@ function App() {
         <Route path="/my-requests" element={<MyRequestsPage />} />
         <Route path="/my-requests/:requestId" element={<RequestDetailsPage />} />
         <Route path="/requests/:requestId" element={<RequestDetailsPage />} />
-        <Route path="/find-work" element={<FindWorkPage />} />
+        <Route path="/browse-requests" element={<BrowseRequestsPage />} />
       </Routes>
     </BrowserRouter>
   );

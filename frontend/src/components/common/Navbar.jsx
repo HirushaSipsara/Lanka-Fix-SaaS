@@ -63,7 +63,7 @@ const Navbar = ({ variant = 'landing' }) => {
                         ) : (
                             <>
                                 <Link to="/" className={`navbar__link ${isActive('/')}`}>Dashboard</Link>
-                                <Link to="/find-work" className={`navbar__link ${isActive('/find-work')}`}>Find Work</Link>
+                                <Link to="/browse-requests" className={`navbar__link ${isActive('/browse-requests')}`}>Find Work</Link>
                                 <Link to="/my-requests" className={`navbar__link ${isActive('/my-requests')}`}>My Requests</Link>
                                 <Link to="#" className="navbar__link">Messages</Link>
                                 <div className="navbar__portal-actions">
@@ -109,7 +109,7 @@ const Navbar = ({ variant = 'landing' }) => {
                     ) : (
                         <>
                             <li><Link to="/" className="navbar__drawer-link" onClick={closeMobile}>Dashboard</Link></li>
-                            <li><Link to="/find-work" className="navbar__drawer-link" onClick={closeMobile}>Find Work</Link></li>
+                            <li><Link to="/browse-requests" className="navbar__drawer-link" onClick={closeMobile}>Find Work</Link></li>
                             <li><Link to="/my-requests" className="navbar__drawer-link" onClick={closeMobile}>My Requests</Link></li>
                             <li><Link to="#" className="navbar__drawer-link" onClick={closeMobile}>Messages</Link></li>
                         </>
