@@ -8,6 +8,7 @@ import CreateRequestPage from './pages/seeker/CreateRequestPage';
 import MyRequestsPage from './pages/seeker/MyRequestsPage';
 import RequestDetailsPage from './pages/seeker/RequestDetailsPage';
 import BrowseRequestsPage from './pages/worker/BrowseRequestsPage';
+import WorkerRequestDetailsPage from './pages/worker/WorkerRequestDetailsPage';
 
 /**
  * App.js — Main Application Component (Simplified)
@@ -24,7 +25,7 @@ function App() {
         <Route path="/create-request" element={<CreateRequestPage />} />
         <Route path="/my-requests" element={<MyRequestsPage />} />
         <Route path="/my-requests/:requestId" element={<RequestDetailsPage />} />
-        <Route path="/requests/:requestId" element={<RequestDetailsPage />} />
+        <Route path="/requests/:requestId" element={<WorkerRequestDetailsPage />} />
         <Route path="/browse-requests" element={<BrowseRequestsPage />} />
       </Routes>
     </BrowserRouter>

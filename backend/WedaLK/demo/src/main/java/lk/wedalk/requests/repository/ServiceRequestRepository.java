@@ -34,12 +34,13 @@ public interface ServiceRequestRepository extends JpaRepository<ServiceRequest, 
     /**
      * Paginated browse with optional keyword, category, and location filters.
      * Keyword searches across title and description (case-insensitive).
+     * Uses COALESCE for null-safe parameter binding (Hibernate 6 compatible).
      */
     @Query("SELECT sr FROM ServiceRequest sr WHERE sr.status = :status " +
-            "AND (:keyword IS NULL OR LOWER(sr.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-            "    OR LOWER(sr.description) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (COALESCE(:keyword, '') = '' OR (LOWER(sr.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "    OR LOWER(sr.description) LIKE LOWER(CONCAT('%', :keyword, '%')))) " +
             "AND (:category IS NULL OR sr.category = :category) " +
-            "AND (:locationArea IS NULL OR LOWER(sr.locationArea) LIKE LOWER(CONCAT('%', :locationArea, '%')))")
+            "AND (COALESCE(:locationArea, '') = '' OR LOWER(sr.locationArea) LIKE LOWER(CONCAT('%', :locationArea, '%')))")
     Page<ServiceRequest> browseOpenRequests(
             @Param("status") RequestStatus status,
             @Param("keyword") String keyword,

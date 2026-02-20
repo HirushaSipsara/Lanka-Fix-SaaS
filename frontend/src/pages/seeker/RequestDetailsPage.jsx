@@ -41,7 +41,11 @@ const RequestDetailsPage = () => {
                 setRequest(transformedRequest);
             } catch (err) {
                 console.error("Error fetching request details:", err);
-                setError('Failed to load request details. Please try again.');
+                if (err.response && err.response.status === 404) {
+                    setError('This request was not found. It may have been removed.');
+                } else {
+                    setError('Failed to load request details. Please try again.');
+                }
             } finally {
                 setLoading(false);
             }
@@ -71,8 +75,8 @@ const RequestDetailsPage = () => {
                 <div className="rd-error">
                     <h3>Something went wrong</h3>
                     <p>{error || 'Request not found'}</p>
-                    <Link to={isWorker ? '/find-work' : '/my-requests'} className="rd-btn-secondary">
-                        {isWorker ? 'Back to Find Work' : 'Back to My Requests'}
+                    <Link to={isWorker ? '/browse-requests' : '/my-requests'} className="rd-btn-secondary">
+                        {isWorker ? 'Back to Browse Requests' : 'Back to My Requests'}
                     </Link>
                 </div>
             </div>
@@ -85,8 +89,8 @@ const RequestDetailsPage = () => {
             
             <main className="rd-container">
                 <div className="rd-breadcrumb">
-                    <Link to={isWorker ? '/find-work' : '/my-requests'} className="rd-back-link">
-                        <span className="material-icons">arrow_back</span> {isWorker ? 'Back to Find Work' : 'Back to My Requests'}
+                    <Link to={isWorker ? '/browse-requests' : '/my-requests'} className="rd-back-link">
+                        <span className="material-icons">arrow_back</span> {isWorker ? 'Back to Browse Requests' : 'Back to My Requests'}
                     </Link>
                 </div>
 
