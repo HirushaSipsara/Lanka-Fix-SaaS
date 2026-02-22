@@ -45,6 +45,8 @@ public class WorkerProfile {
 
     private double hourlyRate;
 
+    private String availability;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

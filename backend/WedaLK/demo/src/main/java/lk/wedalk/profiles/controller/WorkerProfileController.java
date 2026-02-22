@@ -18,8 +18,7 @@ public class WorkerProfileController {
 
     @PostMapping
     public ResponseEntity<WorkerProfileResponse> createProfile(@Valid @RequestBody WorkerProfileCreateRequest request) {
-        // userId is passed in request body
-        WorkerProfileResponse response = workerProfileService.createProfile(request.getUserId(), request);
+        WorkerProfileResponse response = workerProfileService.createProfile(request);
         return ResponseEntity.ok(response);
     }
 

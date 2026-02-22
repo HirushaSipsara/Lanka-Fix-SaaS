@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FaUserCircle, FaMapMarkerAlt, FaTools, FaMoneyBillWave, FaSave, FaSpinner, FaIdCard } from 'react-icons/fa';
+import { FaUserCircle, FaMapMarkerAlt, FaTools, FaMoneyBillWave, FaSave, FaSpinner, FaIdCard, FaCalendarCheck } from 'react-icons/fa';
 import '../styles/WorkerProfile.css'; // Import Vanilla CSS
 
 const WorkerProfileForm = () => {
@@ -10,15 +10,13 @@ const WorkerProfileForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // State for User ID (manual entry)
-  const [userId, setUserId] = useState('');
-
   const [formData, setFormData] = useState({
     bio: '',
     skills: '', // stored as string for input, split for API
     district: '',
     serviceAreas: '', // stored as string for input, split for API
-    hourlyRate: ''
+    hourlyRate: '',
+    availability: ''
   });
 
   useEffect(() => {
@@ -33,13 +31,13 @@ const WorkerProfileForm = () => {
       const response = await axios.get(`http://localhost:8081/api/profiles/${id}`);
       const data = response.data;
       setFormData({
-        bio: data.bio,
-        skills: data.skills.join(', '),
-        district: data.district,
-        serviceAreas: data.serviceAreas.join(', '),
-        hourlyRate: data.hourlyRate
+        bio: data.bio || '',
+        skills: data.skills ? data.skills.join(', ') : '',
+        district: data.district || '',
+        serviceAreas: data.serviceAreas ? data.serviceAreas.join(', ') : '',
+        hourlyRate: data.hourlyRate || '',
+        availability: data.availability || ''
       });
-      setUserId(data.userId); // Ensure we keep the correct user ID
     } catch (err) {
       setError('Failed to fetch profile');
       console.error(err);
@@ -58,12 +56,12 @@ const WorkerProfileForm = () => {
     setError('');
 
     const payload = {
-      userId: userId, // Include userId for creation
       bio: formData.bio,
       skills: formData.skills.split(',').map(s => s.trim()).filter(s => s),
       district: formData.district,
       serviceAreas: formData.serviceAreas.split(',').map(s => s.trim()).filter(s => s),
-      hourlyRate: parseFloat(formData.hourlyRate)
+      hourlyRate: parseFloat(formData.hourlyRate),
+      availability: formData.availability
     };
 
     try {
@@ -74,7 +72,12 @@ const WorkerProfileForm = () => {
       }
       navigate(id ? `/profile/${id}` : '/'); // Redirect to profile view or home
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save profile. Ensure User ID exists (try 1, 2...).');
+      if (err.response?.data?.details) {
+        const errorMessages = Object.values(err.response.data.details).join(', ');
+        setError(`Validation Error: ${errorMessages}`);
+      } else {
+        setError(err.response?.data?.message || 'Failed to save profile. Ensure User ID exists (try 1, 2...).');
+      }
       console.error(err);
     } finally {
       setLoading(false);
@@ -102,32 +105,7 @@ const WorkerProfileForm = () => {
               </div>
             )}
 
-            {!id && (
-              <div className="wp-note">
-                <p>Enter the <strong>User ID</strong> you want to create a profile for (e.g., 1, 2, 3).</p>
-              </div>
-            )}
-
             <form onSubmit={handleSubmit}>
-
-              {/* User ID Section (Only show if creating new profile or if needed) */}
-              {!id && (
-                <div className="wp-form-group">
-                  <label className="wp-label">
-                    <FaIdCard className="wp-label-icon" /> User ID
-                  </label>
-                  <input
-                    type="number"
-                    name="userId"
-                    value={userId}
-                    onChange={(e) => setUserId(e.target.value)}
-                    className="wp-input"
-                    placeholder="Enter User ID (e.g. 1)"
-                    required
-                    min="1"
-                  />
-                </div>
-              )}
 
               {/* Bio Section */}
               <div className="wp-form-group">
@@ -200,6 +178,27 @@ const WorkerProfileForm = () => {
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Availability Section */}
+              <div className="wp-form-group">
+                <label className="wp-label">
+                  <FaCalendarCheck className="wp-label-icon" /> Availability
+                </label>
+                <select
+                  name="availability"
+                  value={formData.availability}
+                  onChange={handleChange}
+                  className="wp-input"
+                  required
+                >
+                  <option value="" disabled>Select availability</option>
+                  <option value="Full Time">Full Time</option>
+                  <option value="Part Time">Part Time</option>
+                  <option value="Weekends Only">Weekends Only</option>
+                  <option value="Evenings">Evenings</option>
+                  <option value="Negotiable">Negotiable</option>
+                </select>
               </div>
 
               {/* Service Areas Section */}

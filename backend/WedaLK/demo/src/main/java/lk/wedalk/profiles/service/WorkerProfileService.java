@@ -19,14 +19,16 @@ public class WorkerProfileService {
     private final UserRepository userRepository;
 
     @Transactional
-    public WorkerProfileResponse createProfile(Long userId, WorkerProfileCreateRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(
-                        () -> new lk.wedalk.common.exceptions.NotFoundException("User not found with id: " + userId));
-
-        if (workerProfileRepository.findByUserId(userId).isPresent()) {
-            throw new lk.wedalk.common.exceptions.BadRequestException("Profile already exists for this user");
-        }
+    public WorkerProfileResponse createProfile(WorkerProfileCreateRequest request) {
+        // Automatically generate a User for the profile (Sprint 1 simplification)
+        String uniqueSuffix = String.valueOf(System.currentTimeMillis());
+        User newUser = User.builder()
+                .fullName("Worker_" + uniqueSuffix)
+                .email("worker_" + uniqueSuffix + "@test.com")
+                .password("password")
+                .role(lk.wedalk.users.model.Role.WORKER)
+                .build();
+        User user = userRepository.save(newUser);
 
         WorkerProfile profile = WorkerProfile.builder()
                 .user(user)
@@ -35,6 +37,7 @@ public class WorkerProfileService {
                 .district(request.getDistrict())
                 .serviceAreas(request.getServiceAreas())
                 .hourlyRate(request.getHourlyRate())
+                .availability(request.getAvailability())
                 .build();
 
         WorkerProfile savedProfile = workerProfileRepository.save(profile);
@@ -68,6 +71,8 @@ public class WorkerProfileService {
             profile.setServiceAreas(request.getServiceAreas());
         if (request.getHourlyRate() != null)
             profile.setHourlyRate(request.getHourlyRate());
+        if (request.getAvailability() != null)
+            profile.setAvailability(request.getAvailability());
 
         WorkerProfile savedProfile = workerProfileRepository.save(profile);
         return mapToResponse(savedProfile);
@@ -88,6 +93,7 @@ public class WorkerProfileService {
                 profile.getSkills(),
                 profile.getDistrict(),
                 profile.getServiceAreas(),
-                profile.getHourlyRate());
+                profile.getHourlyRate(),
+                profile.getAvailability());
     }
 }

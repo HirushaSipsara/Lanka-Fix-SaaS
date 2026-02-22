@@ -2,7 +2,6 @@ package lk.wedalk.profiles.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,9 +14,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class WorkerProfileCreateRequest {
-
-    @NotNull(message = "User ID is required")
-    private Long userId;
 
     @NotBlank(message = "Bio is required")
     private String bio;
@@ -32,4 +28,6 @@ public class WorkerProfileCreateRequest {
     private List<String> serviceAreas;
 
     private double hourlyRate;
+
+    private String availability;
 }

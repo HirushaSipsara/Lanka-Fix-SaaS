@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, Link } from 'react-router-dom';
-import { FaMapMarkerAlt, FaUserEdit, FaTools, FaQuoteLeft, FaEnvelope, FaPhone } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaUserEdit, FaTools, FaQuoteLeft, FaEnvelope, FaPhone, FaCalendarCheck } from 'react-icons/fa';
 import '../styles/WorkerProfile.css'; // Import Vanilla CSS
 
 const WorkerProfileView = () => {
@@ -110,13 +110,24 @@ const WorkerProfileView = () => {
                         {/* Right Column: Stats & Service Areas */}
                         <div>
                             {/* Hourly Rate Card */}
-                            <div className="wp-rate-card">
+                            <div className="wp-rate-card" style={{ marginBottom: '1.5rem' }}>
                                 <h4 className="wp-rate-title">Hourly Rate</h4>
                                 <div className="wp-rate-amount">
                                     <span style={{ fontSize: '1.25rem', marginRight: '0.25rem', verticalAlign: 'top' }}>LKR</span>
                                     {profile.hourlyRate}
                                 </div>
                                 <p className="wp-rate-sub">Available for hire</p>
+                            </div>
+
+                            {/* Availability Card */}
+                            <div className="wp-rate-card" style={{ marginBottom: '2rem', borderLeftColor: '#10b981' }}>
+                                <h4 className="wp-rate-title" style={{ color: '#10b981' }}>
+                                    <FaCalendarCheck style={{ marginRight: '0.5rem' }} />
+                                    Availability
+                                </h4>
+                                <div className="wp-rate-amount" style={{ fontSize: '1.5rem', color: '#111827' }}>
+                                    {profile.availability || 'Not Specified'}
+                                </div>
                             </div>
 
                             {/* Service Areas */}

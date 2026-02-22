@@ -20,4 +20,5 @@ public class WorkerProfileResponse {
     private String district;
     private List<String> serviceAreas;
     private double hourlyRate;
+    private String availability;
 }
