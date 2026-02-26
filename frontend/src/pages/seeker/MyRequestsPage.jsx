@@ -234,7 +234,7 @@ const MyRequestsPage = () => {
             {/* Footer */}
             <footer className="page-footer">
                 <div className="footer-container">
-                    <p className="footer-copyright">© 2023 SkillLink Lanka. All rights reserved.</p>
+                    <p className="footer-copyright">© 2023 LankaFix Lanka. All rights reserved.</p>
                     <div className="footer-links">
                         <a href="#" className="footer-link">Privacy Policy</a>
                         <a href="#" className="footer-link">Terms of Service</a>

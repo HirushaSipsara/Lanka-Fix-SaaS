@@ -404,7 +404,7 @@ const CreateRequestPage = () => {
             </div>
 
             <div className="trust-panel">
-                <h4>Why choose SkillLink?</h4>
+                <h4>Why choose LankaFix?</h4>
                 <div className="trust-items">
                     <div className="trust-item">
                         <span className="trust-icon">✓</span>
@@ -439,7 +439,7 @@ const CreateRequestPage = () => {
                             </p>
                         </div>
                         <div className="sidebar-footer">
-                            © 2026 SkillLink Lanka Inc.
+                            © 2026 LankaFix Lanka Inc.
                         </div>
                     </div>
 

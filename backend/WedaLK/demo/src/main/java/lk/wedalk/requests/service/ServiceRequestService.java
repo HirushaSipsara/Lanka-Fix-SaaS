@@ -4,8 +4,8 @@ import lk.wedalk.common.PagedResponse;
 import java.util.List;
 import java.util.stream.Collectors;
 import lk.wedalk.common.enums.RequestStatus;
-import lk.wedalk.common.enums.Role;
 import lk.wedalk.common.enums.ServiceCategory;
+import lk.wedalk.users.model.Role;
 import lk.wedalk.common.enums.UrgencyLevel;
 import lk.wedalk.common.exceptions.NotFoundException;
 import lk.wedalk.requests.dto.RequestCreateRequest;
@@ -117,15 +117,6 @@ public class ServiceRequestService {
     }
 
   @Transactional(readOnly = true)
-  public RequestResponse getRequestById(Long requestId) {
-    ServiceRequest request =
-        serviceRequestRepository
-            .findById(requestId)
-            .orElseThrow(() -> new NotFoundException("Service request not found"));
-    return mapToResponse(request);
-  }
-
-  @Transactional(readOnly = true)
   public List<RequestResponse> searchRequests(String locationArea, ServiceCategory category) {
     List<ServiceRequest> requests;
 
@@ -142,6 +133,15 @@ public class ServiceRequestService {
     } else {
       requests = serviceRequestRepository.findByStatusOrderByCreatedAtDesc(RequestStatus.OPEN);
     }
+
+    return requests.stream().map(this::mapToResponse).collect(Collectors.toList());
+  }
+
+  @Transactional(readOnly = true)
+  public List<RequestResponse> getOpenRequests() {
+    List<ServiceRequest> requests = serviceRequestRepository.findByStatusOrderByCreatedAtDesc(RequestStatus.OPEN);
+    return requests.stream().map(this::mapToResponse).collect(Collectors.toList());
+  }
 
     @Transactional
     public RequestResponse updateRequest(Long requestId, RequestCreateRequest requestData) {
