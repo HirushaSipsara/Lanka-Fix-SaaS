@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 /**
  * RequestCreateRequest.java — Create Service Request DTO
  *
- * Used by seekers when posting a new service request.
+ * <p>Used by seekers when posting a new service request.
  */
 @Data
 @NoArgsConstructor
@@ -27,12 +27,12 @@ public class RequestCreateRequest {
     @Size(max = 2000, message = "Description must not exceed 2000 characters")
     private String description;
 
-    @NotNull(message = "Category is required")
-    private ServiceCategory category;
+  @NotNull(message = "Category is required")
+  private ServiceCategory category;
 
-    @NotBlank(message = "Location area is required")
-    @Size(max = 100, message = "Location area must not exceed 100 characters")
-    private String locationArea;
+  @NotBlank(message = "Location area is required")
+  @Size(max = 100, message = "Location area must not exceed 100 characters")
+  private String locationArea;
 
     private Double budget;
 
