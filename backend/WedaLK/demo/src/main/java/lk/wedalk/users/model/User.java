@@ -51,6 +51,10 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean isSuspended = false;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 
