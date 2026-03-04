@@ -29,6 +29,17 @@ function App() {
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<LandingPage />} />
+
+          {/* SCRUM-13: Seeker - Create & Manage Requests */}
+          <Route path="/create-request" element={<CreateRequestPage />} />
+          <Route path="/my-requests" element={<MyRequestsPage />} />
+          <Route path="/my-requests/:requestId" element={<RequestDetailsPage />} />
+
+          {/* SCRUM-14 & 15: Worker - Browse & View Request Details */}
+          <Route path="/browse-requests" element={<BrowseRequestsPage />} />
+          <Route path="/requests/:requestId" element={<WorkerRequestDetailsPage />} />
+
+          {/* SCRUM-19, 20, 21: Worker Profile */}
           <Route path="/create-profile" element={<EditWorkerProfilePage />} />
           <Route path="/edit-profile/:id" element={<EditWorkerProfilePage />} />
           <Route path="/profile/:id" element={<WorkerProfilePage />} />
