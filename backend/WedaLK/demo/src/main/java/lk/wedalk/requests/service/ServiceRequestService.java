@@ -134,15 +134,11 @@ public class ServiceRequestService {
     return requests.stream().map(this::mapToResponse).collect(Collectors.toList());
   }
 
-    @Transactional
-    public RequestResponse updateRequest(Long requestId, RequestCreateRequest requestData) {
-        ServiceRequest existingRequest = serviceRequestRepository.findById(requestId)
-                .orElseThrow(() -> new NotFoundException("Service request not found"));
-
   @Transactional(readOnly = true)
-  public List<RequestResponse> getOpenRequests() {
-    List<ServiceRequest> requests = serviceRequestRepository.findByStatusOrderByCreatedAtDesc(RequestStatus.OPEN);
-    return requests.stream().map(this::mapToResponse).collect(Collectors.toList());
+  public RequestResponse getRequestById(Long requestId) {
+    ServiceRequest request = serviceRequestRepository.findById(requestId)
+        .orElseThrow(() -> new NotFoundException("Service request not found"));
+    return mapToResponse(request);
   }
 
   @Transactional
