@@ -10,6 +10,7 @@ import PublicWorkerProfilePage from './pages/public/PublicWorkerProfilePage'; //
 import CreateRequestPage from './pages/seeker/CreateRequestPage';
 import MyRequestsPage from './pages/seeker/MyRequestsPage';
 import RequestDetailsPage from './pages/seeker/RequestDetailsPage';
+import BrowseWorkersPage from './pages/seeker/BrowseWorkersPage';
 import BrowseRequestsPage from './pages/worker/BrowseRequestsPage';
 import WorkerRequestDetailsPage from './pages/worker/WorkerRequestDetailsPage';
 
@@ -38,6 +39,9 @@ function App() {
           {/* SCRUM-14 & 15: Worker - Browse & View Request Details */}
           <Route path="/browse-requests" element={<BrowseRequestsPage />} />
           <Route path="/requests/:requestId" element={<WorkerRequestDetailsPage />} />
+
+          {/* SCRUM-71: Seeker - Browse Workers / Explore Service Providers */}
+          <Route path="/browse-workers" element={<BrowseWorkersPage />} />
 
           {/* SCRUM-19, 20, 21: Worker Profile */}
           <Route path="/create-profile" element={<EditWorkerProfilePage />} />

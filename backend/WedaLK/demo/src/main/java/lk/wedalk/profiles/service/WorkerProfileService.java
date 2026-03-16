@@ -11,6 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class WorkerProfileService {
@@ -42,6 +45,13 @@ public class WorkerProfileService {
 
         WorkerProfile savedProfile = workerProfileRepository.save(profile);
         return mapToResponse(savedProfile);
+    }
+
+    public List<WorkerProfileResponse> getAllProfiles() {
+        return workerProfileRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     public WorkerProfileResponse getProfile(Long id) {
