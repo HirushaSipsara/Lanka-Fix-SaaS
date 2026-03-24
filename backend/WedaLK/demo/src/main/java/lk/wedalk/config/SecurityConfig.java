@@ -19,10 +19,26 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http.csrf(csrf -> csrf.disable()) // Disable CSRF for REST API
-        .authorizeHttpRequests(
-            auth -> auth.anyRequest().permitAll() // Allow all requests without authentication
-            );
+    http
+        .csrf(csrf -> csrf.disable())
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .exceptionHandling(ex -> ex
+            .authenticationEntryPoint(authenticationEntryPoint())
+            .accessDeniedHandler(accessDeniedHandler()))
+        .authenticationProvider(authenticationProvider())
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/api/auth/**", "/api/health").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/quotes").hasRole("WORKER")
+            .requestMatchers(HttpMethod.POST, "/api/quotes/*/accept").hasRole("SEEKER")
+            .requestMatchers(HttpMethod.DELETE, "/api/quotes/**").hasRole("WORKER")
+            .requestMatchers(HttpMethod.GET, "/api/quotes/my").hasRole("WORKER")
+            .requestMatchers(HttpMethod.PATCH, "/api/quotes/*/accept", "/api/quotes/*/reject").hasRole("SEEKER")
+            .requestMatchers(HttpMethod.GET, "/api/quotes/request/**").hasRole("SEEKER")
+            .requestMatchers(HttpMethod.POST, "/api/requests").hasRole("SEEKER")
+            .requestMatchers(HttpMethod.GET, "/api/requests/my").hasRole("SEEKER")
+            .requestMatchers("/api/admin/**").hasRole("ADMIN")
+            .anyRequest().authenticated());
 
     return http.build();
   }
