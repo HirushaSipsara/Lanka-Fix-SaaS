@@ -14,7 +14,7 @@ const RegisterPage = () => {
     district: '',
     role: 'SEEKER',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
 
   const handleChange = (e) => {
@@ -26,22 +26,18 @@ const RegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
     if (!formData.fullName || !formData.email || !formData.password) {
       setError('Full name, email and password are required');
       return;
     }
-
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters');
       return;
     }
-
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
     }
-
     setLoading(true);
     try {
       const payload = {
@@ -50,13 +46,14 @@ const RegisterPage = () => {
         phone: formData.phone || null,
         district: formData.district || null,
         role: formData.role,
-        password: formData.password
+        password: formData.password,
       };
-
       const response = await register(payload);
-      navigate(getDefaultRouteForRole(response.role));
+      navigate(getDefaultRouteForRole(response.role), { replace: true });
     } catch (err) {
-      setError(err?.response?.data?.message || 'Registration failed. Please try again.');
+      setError(
+        err?.response?.data?.message || 'Registration failed. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -69,30 +66,47 @@ const RegisterPage = () => {
           <h1>Create Account</h1>
           <p>Join LankaFix as a seeker or worker</p>
         </div>
-
         {error && <div className="alert alert-error">{error}</div>}
-
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
             <label htmlFor="fullName">Full Name</label>
-            <input id="fullName" name="fullName" value={formData.fullName} onChange={handleChange} required />
+            <input
+              id="fullName"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              required
+            />
           </div>
-
           <div className="form-group">
             <label htmlFor="email">Email</label>
-            <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required />
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
           </div>
-
           <div className="form-group">
             <label htmlFor="phone">Phone Number</label>
-            <input id="phone" name="phone" value={formData.phone} onChange={handleChange} />
+            <input
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+            />
           </div>
-
           <div className="form-group">
             <label htmlFor="district">District</label>
-            <input id="district" name="district" value={formData.district} onChange={handleChange} />
+            <input
+              id="district"
+              name="district"
+              value={formData.district}
+              onChange={handleChange}
+            />
           </div>
-
           <div className="form-group">
             <label htmlFor="role">I want to...</label>
             <select id="role" name="role" value={formData.role} onChange={handleChange}>
@@ -100,12 +114,17 @@ const RegisterPage = () => {
               <option value="WORKER">Find work (Worker)</option>
             </select>
           </div>
-
           <div className="form-group">
             <label htmlFor="password">Password</label>
-            <input type="password" id="password" name="password" value={formData.password} onChange={handleChange} required />
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
           </div>
-
           <div className="form-group">
             <label htmlFor="confirmPassword">Confirm Password</label>
             <input
@@ -117,12 +136,10 @@ const RegisterPage = () => {
               required
             />
           </div>
-
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
             {loading ? 'Creating account...' : 'Register'}
           </button>
         </form>
-
         <div className="login-footer">
           <p>
             Already have an account? <Link to="/login">Login</Link>

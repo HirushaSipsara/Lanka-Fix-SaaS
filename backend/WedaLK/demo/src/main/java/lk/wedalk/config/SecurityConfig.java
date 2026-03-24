@@ -1,8 +1,8 @@
 package lk.wedalk.config;
 
-import lk.wedalk.security.JwtAuthenticationFilter;
-import lk.wedalk.security.CustomUserDetailsService;
 import jakarta.servlet.http.HttpServletResponse;
+import lk.wedalk.security.CustomUserDetailsService;
+import lk.wedalk.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -21,6 +21,7 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
+ * SecurityConfig — JWT + RBAC
  * SecurityConfig.java — JWT + RBAC Security Configuration
  */
 @Configuration
@@ -30,7 +31,9 @@ public class SecurityConfig {
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final CustomUserDetailsService userDetailsService;
 
-  public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, CustomUserDetailsService userDetailsService) {
+  public SecurityConfig(
+      JwtAuthenticationFilter jwtAuthenticationFilter,
+      CustomUserDetailsService userDetailsService) {
     this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     this.userDetailsService = userDetailsService;
   }
@@ -51,7 +54,8 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, "/api/quotes/*/accept").hasRole("SEEKER")
             .requestMatchers(HttpMethod.DELETE, "/api/quotes/**").hasRole("WORKER")
             .requestMatchers(HttpMethod.GET, "/api/quotes/my").hasRole("WORKER")
-            .requestMatchers(HttpMethod.PATCH, "/api/quotes/*/accept", "/api/quotes/*/reject").hasRole("SEEKER")
+            .requestMatchers(HttpMethod.PATCH, "/api/quotes/*/accept", "/api/quotes/*/reject")
+                .hasRole("SEEKER")
             .requestMatchers(HttpMethod.GET, "/api/quotes/request/**").hasRole("SEEKER")
             .requestMatchers(HttpMethod.POST, "/api/requests").hasRole("SEEKER")
             .requestMatchers(HttpMethod.GET, "/api/requests/my").hasRole("SEEKER")
@@ -70,18 +74,21 @@ public class SecurityConfig {
   }
 
   @Bean
-  public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+  public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
+      throws Exception {
     return config.getAuthenticationManager();
   }
 
   @Bean
   public AuthenticationEntryPoint authenticationEntryPoint() {
-    return (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+    return (request, response, authException) ->
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
   }
 
   @Bean
   public AccessDeniedHandler accessDeniedHandler() {
-    return (request, response, accessDeniedException) -> response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+    return (request, response, accessDeniedException) ->
+        response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
   }
 
   @Bean

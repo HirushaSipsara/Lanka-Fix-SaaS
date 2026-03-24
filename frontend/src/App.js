@@ -9,7 +9,7 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import ProtectedRoute from './components/common/ProtectedRoute';
 
-import PublicWorkerProfilePage from './pages/public/PublicWorkerProfilePage'; // Added proper import
+import PublicWorkerProfilePage from './pages/public/PublicWorkerProfilePage';
 
 import CreateRequestPage from './pages/seeker/CreateRequestPage';
 import MyRequestsPage from './pages/seeker/MyRequestsPage';
@@ -20,10 +20,7 @@ import BrowseRequestsPage from './pages/worker/BrowseRequestsPage';
 import WorkerRequestDetailsPage from './pages/worker/WorkerRequestDetailsPage';
 import SubmitQuotePage from './pages/worker/SubmitQuotePage';
 import MyQuotationsPage from './pages/worker/MyQuotationsPage';
-
-
 import EditWorkerProfilePage from './pages/worker/EditWorkerProfilePage';
-
 import WorkerProfilePage from './pages/worker/WorkerProfilePage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AccountProfilePage from './pages/account/AccountProfilePage';
@@ -41,29 +38,27 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/workers/:id" element={<PublicWorkerProfilePage />} />
 
-          {/* SEEKER routes */}
           <Route element={<ProtectedRoute allowedRoles={['SEEKER']} />}>
-            <Route path="/seeker/dashboard" element={<MyRequestsPage />} />
-            <Route path="/seeker/create-request" element={<CreateRequestPage />} />
-            <Route path="/seeker/my-requests" element={<MyRequestsPage />} />
-            <Route path="/seeker/requests/:requestId" element={<RequestDetailsPage />} />
-            <Route path="/seeker/compare-quotes/:requestId" element={<CompareQuotesPage />} />
-            <Route path="/seeker/browse-workers" element={<BrowseWorkersPage />} />
+            <Route path="/create-request" element={<CreateRequestPage />} />
+            <Route path="/my-requests" element={<MyRequestsPage />} />
+            <Route path="/my-requests/:requestId" element={<RequestDetailsPage />} />
+            <Route
+              path="/my-requests/:requestId/quotations"
+              element={<CompareQuotesPage />}
+            />
+            <Route path="/browse-workers" element={<BrowseWorkersPage />} />
           </Route>
 
-          {/* WORKER routes */}
           <Route element={<ProtectedRoute allowedRoles={['WORKER']} />}>
-            <Route path="/worker/dashboard" element={<BrowseRequestsPage />} />
-            <Route path="/worker/browse" element={<BrowseRequestsPage />} />
-            <Route path="/worker/requests/:requestId" element={<WorkerRequestDetailsPage />} />
-            <Route path="/worker/submit-quote/:requestId" element={<SubmitQuotePage />} />
-            <Route path="/worker/my-quotations" element={<MyQuotationsPage />} />
-            <Route path="/worker/create-profile" element={<EditWorkerProfilePage />} />
-            <Route path="/worker/edit-profile/:id" element={<EditWorkerProfilePage />} />
-            <Route path="/worker/profile/:id" element={<WorkerProfilePage />} />
+            <Route path="/browse-requests" element={<BrowseRequestsPage />} />
+            <Route path="/requests/:requestId" element={<WorkerRequestDetailsPage />} />
+            <Route path="/requests/:requestId/quote" element={<SubmitQuotePage />} />
+            <Route path="/my-quotations" element={<MyQuotationsPage />} />
+            <Route path="/create-profile" element={<EditWorkerProfilePage />} />
+            <Route path="/edit-profile/:id" element={<EditWorkerProfilePage />} />
+            <Route path="/profile/:id" element={<WorkerProfilePage />} />
           </Route>
 
-          {/* ADMIN routes */}
           <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
           </Route>

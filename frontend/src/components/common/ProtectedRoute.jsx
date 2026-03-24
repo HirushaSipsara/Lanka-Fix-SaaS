@@ -1,6 +1,10 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { getCurrentUser, getDefaultRouteForRole, isAuthenticated } from '../../services/authService';
+import {
+  getCurrentUser,
+  getDefaultRouteForRole,
+  isAuthenticated,
+} from '../../services/authService';
 
 /**
  * ProtectedRoute.jsx — Route Guard Component

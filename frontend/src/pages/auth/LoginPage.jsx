@@ -42,7 +42,7 @@ const LoginPage = () => {
 
         try {
             const response = await login(formData.email, formData.password);
-            navigate(getDefaultRouteForRole(response.role));
+            navigate(getDefaultRouteForRole(response.role), { replace: true });
         } catch (err) {
             console.error('Login error:', err);
             setError(

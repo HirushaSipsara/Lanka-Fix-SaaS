@@ -32,24 +32,27 @@ public class AuthService {
     if (userRepository.existsByEmail(request.getEmail())) {
       throw new BadRequestException("Email is already registered");
     }
-    if (request.getRole() == Role.ADMIN) {
+    Role role = Role.valueOf(request.getRole().name());
+    if (role == Role.ADMIN) {
       throw new BadRequestException("Admin registration is not allowed");
     }
 
-    User user = User.builder()
-        .fullName(request.getFullName())
-        .email(request.getEmail())
-        .password(passwordEncoder.encode(request.getPassword()))
-        .phoneNumber(request.getPhone())
-        .district(request.getDistrict())
-        .role(request.getRole())
-        .isSuspended(false)
-        .build();
+    User user =
+        User.builder()
+            .fullName(request.getFullName())
+            .email(request.getEmail())
+            .password(passwordEncoder.encode(request.getPassword()))
+            .phoneNumber(request.getPhone())
+            .district(request.getDistrict())
+            .role(role)
+            .isSuspended(false)
+            .build();
 
     User saved = userRepository.save(user);
     UserDetails details = userDetailsService.loadUserByUsername(saved.getEmail());
     String token = jwtService.generateToken(details, saved.getId(), saved.getRole().name());
-    return new AuthResponse(token, saved.getId(), saved.getEmail(), saved.getFullName(), saved.getRole().name());
+    return new AuthResponse(
+        token, saved.getId(), saved.getEmail(), saved.getFullName(), saved.getRole().name());
   }
 
   public AuthResponse login(LoginRequest request) {
@@ -60,11 +63,14 @@ public class AuthService {
       throw new UnauthorizedException("Invalid email or password");
     }
 
-    User user = userRepository.findByEmail(request.getEmail())
-        .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
+    User user =
+        userRepository
+            .findByEmail(request.getEmail())
+            .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
     UserDetails details = userDetailsService.loadUserByUsername(user.getEmail());
     String token = jwtService.generateToken(details, user.getId(), user.getRole().name());
-    return new AuthResponse(token, user.getId(), user.getEmail(), user.getFullName(), user.getRole().name());
+    return new AuthResponse(
+        token, user.getId(), user.getEmail(), user.getFullName(), user.getRole().name());
   }
 }

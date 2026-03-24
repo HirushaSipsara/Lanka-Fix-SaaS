@@ -20,42 +20,24 @@ const Navbar = ({ variant = 'landing' }) => {
         role === 'WORKER' ? '/worker/dashboard' :
         role === 'ADMIN' ? '/admin/dashboard' : '/';
 
-    useEffect(() => {
-        const handleScroll = () => {
-            setScrolled(window.scrollY > 50);
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) setMobileOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-    useEffect(() => {
-        const handleResize = () => {
-            if (window.innerWidth > 768) setMobileOpen(false);
-        };
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileOpen]);
 
-    useEffect(() => {
-        document.body.style.overflow = mobileOpen ? 'hidden' : '';
-        return () => { document.body.style.overflow = ''; };
-    }, [mobileOpen]);
+  const closeMobile = () => setMobileOpen(false);
 
-    const closeMobile = () => setMobileOpen(false);
-
-    const isPortal = variant === 'portal';
-
-    return (
-        <>
-            <nav className={`navbar ${scrolled ? 'navbar--scrolled' : ''} ${isPortal ? 'navbar--portal' : ''}`} id="main-navbar">
-                <div className="navbar__inner container">
-                    {/* Logo */}
-                    <Link to="/" className="navbar__logo" onClick={closeMobile}>
-                        <span className="navbar__logo-icon">🔧</span>
-                        <span className="navbar__logo-text">
-                            Lanka<span className="navbar__logo-accent">FIX</span>
-                        </span>
-                    </Link>
+  const isPortal = variant === 'portal';
 
                     {/* Desktop Nav */}
                     <div className="navbar__right">
@@ -92,25 +74,117 @@ const Navbar = ({ variant = 'landing' }) => {
                         )}
                     </div>
 
-                    {/* Hamburger */}
-                    <button
-                        className={`navbar__hamburger ${mobileOpen ? 'navbar__hamburger--active' : ''}`}
-                        onClick={() => setMobileOpen(!mobileOpen)}
-                        aria-label="Toggle navigation menu"
-                        id="navbar-hamburger"
-                    >
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </button>
+          <div className="navbar__right">
+            {!isPortal ? (
+              <>
+                <a href="#hero" className="navbar__link">
+                  Home
+                </a>
+                <a href="#how-it-works" className="navbar__link">
+                  How It Works
+                </a>
+                <a href="#services" className="navbar__link">
+                  Services
+                </a>
+                <Link to="/login" className="navbar__link">
+                  Sign up / Log in
+                </Link>
+                <Link
+                  to="/register"
+                  className="btn btn-sm btn-secondary navbar__btn-tasker"
+                >
+                  Become a Tasker
+                </Link>
+              </>
+            ) : (
+              <>
+                <NavLink
+                  to={dashboardPath}
+                  end
+                  className={({ isActive }) =>
+                    `navbar__link ${isActive ? 'active' : ''}`
+                  }
+                >
+                  Dashboard
+                </NavLink>
+                {role === 'WORKER' && (
+                  <NavLink
+                    to="/browse-requests"
+                    className={({ isActive }) =>
+                      `navbar__link ${isActive ? 'active' : ''}`
+                    }
+                  >
+                    Find Work
+                  </NavLink>
+                )}
+                {role === 'SEEKER' && (
+                  <NavLink
+                    to="/browse-workers"
+                    className={({ isActive }) =>
+                      `navbar__link ${isActive ? 'active' : ''}`
+                    }
+                  >
+                    Browse Workers
+                  </NavLink>
+                )}
+                {role === 'WORKER' && (
+                  <NavLink
+                    to="/my-quotations"
+                    className={({ isActive }) =>
+                      `navbar__link ${isActive ? 'active' : ''}`
+                    }
+                  >
+                    My Quotations
+                  </NavLink>
+                )}
+                {role === 'SEEKER' && (
+                  <NavLink
+                    to="/my-requests"
+                    className={({ isActive }) =>
+                      `navbar__link ${isActive ? 'active' : ''}`
+                    }
+                  >
+                    My Requests
+                  </NavLink>
+                )}
+                <div className="navbar__portal-actions" style={{ position: 'relative' }}>
+                  <Link
+                    to="/account/profile"
+                    className="navbar__avatar"
+                    title={displayName}
+                    onClick={closeMobile}
+                  >
+                    {avatarText}
+                  </Link>
+                  <button
+                    type="button"
+                    className="navbar__link"
+                    onClick={() => {
+                      logout();
+                      closeMobile();
+                      navigate('/login', { replace: true });
+                    }}
+                  >
+                    Logout
+                  </button>
                 </div>
-            </nav>
+              </>
+            )}
+          </div>
 
-            {/* Mobile Overlay */}
-            <div
-                className={`navbar__overlay ${mobileOpen ? 'navbar__overlay--visible' : ''}`}
-                onClick={closeMobile}
-            />
+          <button
+            className={`navbar__hamburger ${mobileOpen ? 'navbar__hamburger--active' : ''}`}
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Toggle navigation menu"
+            id="navbar-hamburger"
+            type="button"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+        </div>
+      </nav>
 
             {/* Mobile Drawer */}
             <div className={`navbar__drawer ${mobileOpen ? 'navbar__drawer--open' : ''}`} id="mobile-drawer">
@@ -145,8 +219,11 @@ const Navbar = ({ variant = 'landing' }) => {
                     )}
                 </div>
             </div>
-        </>
-    );
+          )}
+        </div>
+      </div>
+    </>
+  );
 };
 
 export default Navbar;
