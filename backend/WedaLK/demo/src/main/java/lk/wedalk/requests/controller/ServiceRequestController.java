@@ -7,6 +7,7 @@ import lk.wedalk.common.PagedResponse;
 import lk.wedalk.common.enums.ServiceCategory;
 import lk.wedalk.requests.dto.RequestCreateRequest;
 import lk.wedalk.requests.dto.RequestResponse;
+import lk.wedalk.requests.dto.WorkerAssignedJobResponse;
 import lk.wedalk.requests.service.ServiceRequestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -69,6 +70,13 @@ public class ServiceRequestController {
   public ResponseEntity<ApiResponse<RequestResponse>> getRequestById(@PathVariable Long id) {
     RequestResponse request = serviceRequestService.getRequestById(id);
     return ResponseEntity.ok(ApiResponse.success(request, "Request retrieved successfully"));
+  }
+
+  @GetMapping("/worker/{workerId}")
+  public ResponseEntity<ApiResponse<List<WorkerAssignedJobResponse>>> getAssignedRequestsForWorker(
+      @PathVariable Long workerId) {
+    List<WorkerAssignedJobResponse> requests = serviceRequestService.getAssignedRequestsForWorker(workerId);
+    return ResponseEntity.ok(ApiResponse.success(requests, "Assigned requests retrieved successfully"));
   }
 
   @GetMapping("/search")

@@ -3,6 +3,7 @@ package lk.wedalk.requests.service;
 import lk.wedalk.common.PagedResponse;
 import java.util.List;
 import java.util.stream.Collectors;
+import lk.wedalk.common.enums.QuoteStatus;
 import lk.wedalk.common.enums.RequestStatus;
 import lk.wedalk.common.enums.ServiceCategory;
 import lk.wedalk.users.model.Role;
@@ -10,6 +11,7 @@ import lk.wedalk.common.enums.UrgencyLevel;
 import lk.wedalk.common.exceptions.NotFoundException;
 import lk.wedalk.requests.dto.RequestCreateRequest;
 import lk.wedalk.requests.dto.RequestResponse;
+import lk.wedalk.requests.dto.WorkerAssignedJobResponse;
 import lk.wedalk.requests.model.ServiceRequest;
 import lk.wedalk.requests.repository.ServiceRequestRepository;
 import lk.wedalk.users.model.User;
@@ -141,6 +143,14 @@ public class ServiceRequestService {
     return mapToResponse(request);
   }
 
+  @Transactional(readOnly = true)
+  public List<WorkerAssignedJobResponse> getAssignedRequestsForWorker(Long workerId) {
+    List<ServiceRequest> requests = serviceRequestRepository.findAssignedRequestsByWorkerId(
+        workerId, QuoteStatus.ACCEPTED);
+
+    return requests.stream().map(this::mapToWorkerAssignedJobResponse).collect(Collectors.toList());
+  }
+
   @Transactional
   public RequestResponse updateRequest(Long requestId, RequestCreateRequest requestData) {
     ServiceRequest existingRequest = serviceRequestRepository.findById(requestId)
@@ -181,6 +191,15 @@ public class ServiceRequestService {
         .seekerId(request.getSeeker().getId())
         .seekerName(request.getSeeker().getFullName())
         .seekerPhone(request.getSeeker().getPhoneNumber())
+        .build();
+  }
+
+  private WorkerAssignedJobResponse mapToWorkerAssignedJobResponse(ServiceRequest request) {
+    return WorkerAssignedJobResponse.builder()
+        .requestId(request.getId())
+        .requestTitle(request.getTitle())
+        .seekerName(request.getSeeker().getFullName())
+        .status(request.getStatus())
         .build();
   }
 }
