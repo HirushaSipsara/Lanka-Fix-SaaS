@@ -7,6 +7,13 @@ import { getQuotesByRequest } from '../../services/quoteService';
 import { formatBudget } from '../../utils/constants';
 import './RequestDetailsPage.css';
 
+const getJobStatusLabel = (status) => {
+    if (status === 'ASSIGNED') return 'Assigned';
+    if (status === 'IN_PROGRESS') return 'In Progress';
+    if (status === 'COMPLETED') return 'Completed';
+    return status;
+};
+
 const RequestDetailsPage = () => {
     const { requestId } = useParams();
     const navigate = useNavigate();
@@ -214,6 +221,38 @@ const RequestDetailsPage = () => {
                                         <div>
                                             <p className="rd-label">Verification</p>
                                             <p className="rd-value">{request.verification}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="rd-description-section">
+                                    <h3>Assigned Worker &amp; Status</h3>
+                                    <div className="rd-info-grid">
+                                        <div className="rd-info-item">
+                                            <div className="rd-info-icon">
+                                                <span className="rd-info-emoji">👷</span>
+                                            </div>
+                                            <div>
+                                                <p className="rd-label">Assigned Worker</p>
+                                                <p className="rd-value">
+                                                    {request.assignedWorkerId ? (
+                                                        <Link to={`/workers/${request.assignedWorkerId}`} className="rd-worker-link">
+                                                            {request.assignedWorkerName || `Worker #${request.assignedWorkerId}`}
+                                                        </Link>
+                                                    ) : (
+                                                        'No worker assigned yet'
+                                                    )}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="rd-info-item">
+                                            <div className="rd-info-icon">
+                                                <span className="rd-info-emoji">📌</span>
+                                            </div>
+                                            <div>
+                                                <p className="rd-label">Job Status</p>
+                                                <span className="rd-status-badge">{getJobStatusLabel(request.status)}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
