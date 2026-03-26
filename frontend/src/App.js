@@ -20,6 +20,9 @@ import BrowseRequestsPage from './pages/worker/BrowseRequestsPage';
 import WorkerRequestDetailsPage from './pages/worker/WorkerRequestDetailsPage';
 import SubmitQuotePage from './pages/worker/SubmitQuotePage';
 import MyQuotationsPage from './pages/worker/MyQuotationsPage';
+import MyJobsPage from './pages/worker/MyJobsPage';
+
+
 import EditWorkerProfilePage from './pages/worker/EditWorkerProfilePage';
 import WorkerProfilePage from './pages/worker/WorkerProfilePage';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -69,7 +72,14 @@ function App() {
             <Route path="/account/profile/edit" element={<AccountProfilePage />} />
           </Route>
 
-          <Route path="*" element={<NotFound />} />
+          {/* SCRUM-69: Worker - View Assigned Jobs */}
+          <Route path="/my-jobs" element={<MyJobsPage />} />
+
+          {/* SCRUM-19, 20, 21: Worker Profile */}
+          <Route path="/create-profile" element={<EditWorkerProfilePage />} />
+          <Route path="/edit-profile/:id" element={<EditWorkerProfilePage />} />
+          <Route path="/profile/:id" element={<WorkerProfilePage />} />
+          <Route path="/workers/:id" element={<PublicWorkerProfilePage />} />
         </Route>
       </Routes>
     </BrowserRouter>

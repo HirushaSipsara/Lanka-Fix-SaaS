@@ -2,14 +2,20 @@ package lk.wedalk.requests.service;
 
 import lk.wedalk.common.PagedResponse;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import lk.wedalk.common.enums.QuoteStatus;
 import lk.wedalk.common.enums.RequestStatus;
 import lk.wedalk.common.enums.ServiceCategory;
+import lk.wedalk.profiles.repository.WorkerProfileRepository;
+import lk.wedalk.quotes.model.Quotation;
+import lk.wedalk.quotes.repository.QuotationRepository;
 import lk.wedalk.users.model.Role;
 import lk.wedalk.common.enums.UrgencyLevel;
 import lk.wedalk.common.exceptions.NotFoundException;
 import lk.wedalk.requests.dto.RequestCreateRequest;
 import lk.wedalk.requests.dto.RequestResponse;
+import lk.wedalk.requests.dto.WorkerAssignedJobResponse;
 import lk.wedalk.requests.model.ServiceRequest;
 import lk.wedalk.requests.repository.ServiceRequestRepository;
 import lk.wedalk.users.model.User;
@@ -34,6 +40,8 @@ public class ServiceRequestService {
 
   private final ServiceRequestRepository serviceRequestRepository;
   private final UserRepository userRepository;
+  private final WorkerProfileRepository workerProfileRepository;
+  private final QuotationRepository quotationRepository;
 
   @Transactional
   public RequestResponse createRequest(Long seekerId, RequestCreateRequest request) {
@@ -138,7 +146,15 @@ public class ServiceRequestService {
   public RequestResponse getRequestById(Long requestId) {
     ServiceRequest request = serviceRequestRepository.findById(requestId)
         .orElseThrow(() -> new NotFoundException("Service request not found"));
-    return mapToResponse(request);
+    return mapToResponse(request, true);
+  }
+
+  @Transactional(readOnly = true)
+  public List<WorkerAssignedJobResponse> getAssignedRequestsForWorker(Long workerId) {
+    List<ServiceRequest> requests = serviceRequestRepository.findAssignedRequestsByWorkerId(
+        workerId, QuoteStatus.ACCEPTED);
+
+    return requests.stream().map(this::mapToWorkerAssignedJobResponse).collect(Collectors.toList());
   }
 
   @Transactional
@@ -167,6 +183,32 @@ public class ServiceRequestService {
   }
 
   private RequestResponse mapToResponse(ServiceRequest request) {
+    return mapToResponse(request, false);
+  }
+
+  private RequestResponse mapToResponse(ServiceRequest request, boolean includeAssignedWorkerLookup) {
+    Optional<User> assignedWorkerOpt = Optional.ofNullable(request.getAssignedWorker());
+    if (includeAssignedWorkerLookup && assignedWorkerOpt.isEmpty()) {
+      assignedWorkerOpt = quotationRepository.findByRequestIdOrderByPriceAsc(request.getId()).stream()
+          .filter(q -> q.getStatus() == QuoteStatus.ACCEPTED)
+          .map(Quotation::getWorker)
+          .findFirst();
+    }
+
+    Long assignedWorkerId = null;
+    String assignedWorkerName = null;
+    Long assignedWorkerProfileId = null;
+
+    if (assignedWorkerOpt.isPresent()) {
+      User assignedWorker = assignedWorkerOpt.get();
+      assignedWorkerId = assignedWorker.getId();
+      assignedWorkerName = assignedWorker.getFullName();
+      assignedWorkerProfileId = workerProfileRepository
+          .findByUserId(assignedWorkerId)
+          .map(profile -> profile.getId())
+          .orElse(null);
+    }
+
     return RequestResponse.builder()
         .id(request.getId())
         .title(request.getTitle())
@@ -181,6 +223,18 @@ public class ServiceRequestService {
         .seekerId(request.getSeeker().getId())
         .seekerName(request.getSeeker().getFullName())
         .seekerPhone(request.getSeeker().getPhoneNumber())
+        .assignedWorkerId(assignedWorkerId)
+        .assignedWorkerName(assignedWorkerName)
+        .assignedWorkerProfileId(assignedWorkerProfileId)
+        .build();
+  }
+
+  private WorkerAssignedJobResponse mapToWorkerAssignedJobResponse(ServiceRequest request) {
+    return WorkerAssignedJobResponse.builder()
+        .requestId(request.getId())
+        .requestTitle(request.getTitle())
+        .seekerName(request.getSeeker().getFullName())
+        .status(request.getStatus())
         .build();
   }
 }
