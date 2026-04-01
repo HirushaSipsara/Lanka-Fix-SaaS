@@ -1,17 +1,47 @@
 /**
  * disputeService.js — Dispute API Service
  *
- * This file should contain:
- * - Import apiClient from './apiClient'
- * - Functions:
- *     - createDispute(disputeData) → POST /disputes
- *     - getDisputeById(id) → GET /disputes/{id}
- *     - getOpenDisputes() → GET /disputes/open (admin)
- *     - resolveDispute(id, resolutionData) → POST /disputes/{id}/resolve (admin)
- *
- * Purpose:
- *   Centralizes all dispute API calls.
- *   Used by RequestDetailsPage (raise dispute) and admin DisputeReviewPage.
- *
- * Export: { createDispute, getDisputeById, getOpenDisputes, resolveDispute }
+ * Handles dispute submission and retrieval.
+ * SCRUM-94: Only the seeker who originally posted the request can submit a dispute.
+ * The backend enforces ownership validation and returns 403 if violated.
  */
+
+import apiClient from './apiClient';
+
+/**
+ * Submit a dispute for a service request marked as "Not Completed".
+ * @param {Object} disputeData - { requestId, reason }
+ * @returns {Promise<Object>} Created dispute response
+ */
+export const submitDispute = async (disputeData) => {
+  const response = await apiClient.post('/disputes', disputeData);
+  return response.data.data;
+};
+
+/**
+ * Get all disputes submitted by the current user (seeker).
+ * @returns {Promise<Array>} List of disputes
+ */
+export const getMyDisputes = async () => {
+  const response = await apiClient.get('/disputes/my');
+  return response.data.data;
+};
+
+/**
+ * Get a specific dispute by ID.
+ * @param {number} id - Dispute ID
+ * @returns {Promise<Object>} Dispute details
+ */
+export const getDisputeById = async (id) => {
+  const response = await apiClient.get(`/disputes/${id}`);
+  return response.data.data;
+};
+
+/**
+ * Get all open disputes (admin only).
+ * @returns {Promise<Array>} List of open disputes
+ */
+export const getOpenDisputes = async () => {
+  const response = await apiClient.get('/disputes/open');
+  return response.data.data;
+};
