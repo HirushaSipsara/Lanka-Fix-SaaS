@@ -1,18 +1,73 @@
 package lk.wedalk.disputes.model;
 
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import lk.wedalk.common.enums.DisputeStatus;
+import lk.wedalk.requests.model.ServiceRequest;
+import lk.wedalk.users.model.User;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 /**
  * Dispute.java — Dispute JPA Entity
  *
- * <p>This file should contain: - @Entity, @Table(name = "disputes") annotations - Fields: - Long id
- * — @Id, @GeneratedValue - ServiceRequest request — @OneToOne, the request marked as "Not
- * Completed" - User seeker — @ManyToOne, the seeker who raised the dispute - User worker
- * — @ManyToOne, the assigned worker - String seekerReason — seeker's explanation of why the job
- * wasn't completed - String workerResponse — worker's response/explanation (nullable) -
- * DisputeStatus status — @Enumerated — OPEN, RESOLVED - String resolution — admin's resolution
- * decision (nullable) - User resolvedBy — @ManyToOne (nullable), admin who resolved - LocalDateTime
- * createdAt - LocalDateTime resolvedAt — nullable -
- * Lombok: @Data, @Builder, @NoArgsConstructor, @AllArgsConstructor
- *
- * <p>Purpose: Created automatically when a seeker marks a request as "Not Completed". Admin reviews
- * and resolves the dispute.
+ * <p>Created when a seeker marks a request as "Not Completed".
+ * Admin reviews and resolves the dispute.
  */
+@Entity
+@Table(name = "disputes")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Dispute {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "request_id", nullable = false)
+    private ServiceRequest request;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seeker_id", nullable = false)
+    private User seeker;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "worker_id", nullable = false)
+    private User worker;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String seekerReason;
+
+    @Column(columnDefinition = "TEXT")
+    private String workerResponse;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private DisputeStatus status;
+
+    @Column(columnDefinition = "TEXT")
+    private String resolution;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "resolved_by")
+    private User resolvedBy;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column
+    private LocalDateTime resolvedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        if (status == null) {
+            status = DisputeStatus.OPEN;
+        }
+    }
+}

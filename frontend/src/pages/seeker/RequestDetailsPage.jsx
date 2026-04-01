@@ -10,6 +10,8 @@ import {
 } from '../../components/ui/PortalPrimitives';
 import { deleteRequest, getRequestById, updateRequestStatus } from '../../services/requestService';
 import { getQuotesByRequest } from '../../services/quoteService';
+import { submitReview } from '../../services/reviewService';
+import { submitDispute } from '../../services/disputeService';
 import { formatBudget, formatCategoryLabel } from '../../utils/constants';
 
 const getJobStatusLabel = (status) => {
@@ -95,6 +97,19 @@ const RequestDetailsPage = () => {
   const [quotesLoading, setQuotesLoading] = useState(false);
   const [quotesError, setQuotesError] = useState('');
 
+  // Review form state
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewMessage, setReviewMessage] = useState('');
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+
+  // Dispute form state
+  const [disputeReason, setDisputeReason] = useState('');
+  const [disputeSubmitting, setDisputeSubmitting] = useState(false);
+  const [disputeMessage, setDisputeMessage] = useState('');
+  const [disputeSubmitted, setDisputeSubmitted] = useState(false);
+
   const fetchRequestDetails = useCallback(async (showLoading = true) => {
     if (!requestId) return;
     if (showLoading) setLoading(true);
@@ -138,6 +153,40 @@ const RequestDetailsPage = () => {
   useEffect(() => {
     fetchQuotes();
   }, [fetchQuotes]);
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    setReviewSubmitting(true);
+    setReviewMessage('');
+    try {
+      await submitReview({ requestId: Number(requestId), rating: reviewRating, comment: reviewComment });
+      setReviewMessage('Review submitted successfully! Thank you for your feedback.');
+      setReviewSubmitted(true);
+    } catch (err) {
+      setReviewMessage(err.response?.data?.message || 'Failed to submit review. Please try again.');
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
+  const handleSubmitDispute = async (e) => {
+    e.preventDefault();
+    if (!disputeReason.trim()) {
+      setDisputeMessage('Please provide a reason for the dispute.');
+      return;
+    }
+    setDisputeSubmitting(true);
+    setDisputeMessage('');
+    try {
+      await submitDispute({ requestId: Number(requestId), reason: disputeReason });
+      setDisputeMessage('Dispute submitted successfully. Our team will review it shortly.');
+      setDisputeSubmitted(true);
+    } catch (err) {
+      setDisputeMessage(err.response?.data?.message || 'Failed to submit dispute. Please try again.');
+    } finally {
+      setDisputeSubmitting(false);
+    }
+  };
 
   const handleUpdateJobOutcome = async (status) => {
     const statusLabel = status === 'COMPLETED' ? 'Completed' : 'Not Completed';
@@ -364,6 +413,160 @@ const RequestDetailsPage = () => {
                 </div>
               ) : null}
             </SectionCard>
+
+            {/* SCRUM-94: Review submission — only visible to the seeker who owns this request, after COMPLETED */}
+            {!isWorker && request.status === 'COMPLETED' ? (
+              <SectionCard className="border-green-100 bg-white shadow-card">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="ui-stat-label">Feedback</p>
+                    <h2 className="mt-2 text-xl font-bold text-ink">Leave a Review</h2>
+                    <p className="mt-2 text-sm leading-6 text-ink-muted">
+                      Share your experience with the worker to help others make informed decisions.
+                    </p>
+                  </div>
+                  <span className="material-icons text-4xl text-green-500">star_rate</span>
+                </div>
+
+                {reviewSubmitted ? (
+                  <div className="mt-4">
+                    <AlertPanel tone="success" icon="check_circle" title="Review Submitted">
+                      <p>{reviewMessage}</p>
+                    </AlertPanel>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmitReview} className="mt-5 space-y-4">
+                    {/* Star Rating */}
+                    <div>
+                      <label className="ui-stat-label mb-2 block">Rating</label>
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setReviewRating(star)}
+                            className={`text-3xl transition-colors ${star <= reviewRating ? 'text-amber-400' : 'text-gray-300'} hover:text-amber-400`}
+                          >
+                            <span className="material-icons">star</span>
+                          </button>
+                        ))}
+                        <span className="ml-2 text-sm font-semibold text-ink-muted">{reviewRating} / 5</span>
+                      </div>
+                    </div>
+
+                    {/* Comment */}
+                    <div>
+                      <label className="ui-stat-label mb-2 block" htmlFor="review-comment">
+                        Comment <span className="font-normal text-ink-muted">(optional)</span>
+                      </label>
+                      <textarea
+                        id="review-comment"
+                        rows={4}
+                        value={reviewComment}
+                        onChange={(e) => setReviewComment(e.target.value)}
+                        placeholder="Describe your experience with the worker..."
+                        className="w-full rounded-card border border-line bg-surface-muted/70 px-4 py-3 text-sm text-ink placeholder-ink-muted focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                      />
+                    </div>
+
+                    {reviewMessage ? (
+                      <AlertPanel
+                        tone={reviewMessage.toLowerCase().includes('successfully') ? 'success' : 'danger'}
+                        icon={reviewMessage.toLowerCase().includes('successfully') ? 'check_circle' : 'error_outline'}
+                      >
+                        <p>{reviewMessage}</p>
+                      </AlertPanel>
+                    ) : null}
+
+                    <button
+                      type="submit"
+                      disabled={reviewSubmitting}
+                      className="ui-button-primary w-full sm:w-auto"
+                    >
+                      {reviewSubmitting ? (
+                        <>
+                          <span className="material-icons animate-spin text-base">refresh</span>
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <span className="material-icons text-base">star</span>
+                          Submit Review
+                        </>
+                      )}
+                    </button>
+                  </form>
+                )}
+              </SectionCard>
+            ) : null}
+
+            {/* SCRUM-94: Dispute submission — only visible to the seeker who owns this request, after NOT_COMPLETED */}
+            {!isWorker && request.status === 'NOT_COMPLETED' ? (
+              <SectionCard className="border-red-100 bg-white shadow-card">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="ui-stat-label">Issue Resolution</p>
+                    <h2 className="mt-2 text-xl font-bold text-ink">Raise a Dispute</h2>
+                    <p className="mt-2 text-sm leading-6 text-ink-muted">
+                      If the job was not completed satisfactorily, submit a dispute for admin review.
+                    </p>
+                  </div>
+                  <span className="material-icons text-4xl text-red-400">report_problem</span>
+                </div>
+
+                {disputeSubmitted ? (
+                  <div className="mt-4">
+                    <AlertPanel tone="success" icon="check_circle" title="Dispute Submitted">
+                      <p>{disputeMessage}</p>
+                    </AlertPanel>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmitDispute} className="mt-5 space-y-4">
+                    <div>
+                      <label className="ui-stat-label mb-2 block" htmlFor="dispute-reason">
+                        Reason <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        id="dispute-reason"
+                        rows={4}
+                        value={disputeReason}
+                        onChange={(e) => setDisputeReason(e.target.value)}
+                        placeholder="Explain why the job was not completed as expected..."
+                        required
+                        className="w-full rounded-card border border-line bg-surface-muted/70 px-4 py-3 text-sm text-ink placeholder-ink-muted focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                      />
+                    </div>
+
+                    {disputeMessage ? (
+                      <AlertPanel
+                        tone={disputeMessage.toLowerCase().includes('successfully') ? 'success' : 'danger'}
+                        icon={disputeMessage.toLowerCase().includes('successfully') ? 'check_circle' : 'error_outline'}
+                      >
+                        <p>{disputeMessage}</p>
+                      </AlertPanel>
+                    ) : null}
+
+                    <button
+                      type="submit"
+                      disabled={disputeSubmitting}
+                      className="ui-button-primary w-full sm:w-auto"
+                    >
+                      {disputeSubmitting ? (
+                        <>
+                          <span className="material-icons animate-spin text-base">refresh</span>
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <span className="material-icons text-base">report</span>
+                          Submit Dispute
+                        </>
+                      )}
+                    </button>
+                  </form>
+                )}
+              </SectionCard>
+            ) : null}
 
             {!isWorker ? (
               <SectionCard className="border-line-strong bg-white shadow-card">

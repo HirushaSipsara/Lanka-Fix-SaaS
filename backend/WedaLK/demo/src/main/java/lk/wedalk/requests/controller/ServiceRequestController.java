@@ -115,9 +115,8 @@ public class ServiceRequestController {
   @PutMapping("/{requestId}/status")
   public ResponseEntity<ApiResponse<RequestResponse>> updateRequestStatus(
       @PathVariable Long requestId,
-      @Valid @RequestBody RequestStatusUpdateRequest request,
-      @RequestParam(required = false, defaultValue = "1") Long seekerId) {
-    RequestResponse response = serviceRequestService.updateRequestStatus(requestId, seekerId, request);
+      @Valid @RequestBody RequestStatusUpdateRequest request) {
+    RequestResponse response = serviceRequestService.updateRequestStatus(requestId, requireCurrentUserId(), request);
     return ResponseEntity.ok(ApiResponse.success(response, "Request status updated successfully"));
   }
 
