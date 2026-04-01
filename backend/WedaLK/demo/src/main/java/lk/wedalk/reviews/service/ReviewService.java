@@ -106,7 +106,7 @@ public class ReviewService {
 
     @Transactional(readOnly = true)
     public List<ReviewResponse> getReviewsBySeeker(Long seekerId) {
-        List<Review> reviews = reviewRepository.findByReviewerId(seekerId);
+        List<Review> reviews = reviewRepository.findByReviewerIdOrderByCreatedAtDesc(seekerId);
         return reviews.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 

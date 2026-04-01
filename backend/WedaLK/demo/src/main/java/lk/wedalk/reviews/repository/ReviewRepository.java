@@ -20,6 +20,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review> findByReviewerId(Long reviewerId);
 
+    List<Review> findByReviewerIdOrderByCreatedAtDesc(Long reviewerId);
+
     Optional<Review> findByRequestIdAndReviewerId(Long requestId, Long reviewerId);
 
     boolean existsByRequestIdAndReviewerId(Long requestId, Long reviewerId);
