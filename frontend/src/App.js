@@ -16,6 +16,7 @@ import MyRequestsPage from './pages/seeker/MyRequestsPage';
 import RequestDetailsPage from './pages/seeker/RequestDetailsPage';
 import BrowseWorkersPage from './pages/seeker/BrowseWorkersPage';
 import CompareQuotesPage from './pages/seeker/CompareQuotesPage';
+import MyReviewsPage from './pages/seeker/MyReviewsPage';
 import WorkerDashboard from './pages/worker/WorkerDashboard';
 import BrowseRequestsPage from './pages/worker/BrowseRequestsPage';
 import WorkerRequestDetailsPage from './pages/worker/WorkerRequestDetailsPage';
@@ -53,6 +54,7 @@ function App() {
               element={<CompareQuotesPage />}
             />
             <Route path="/browse-workers" element={<BrowseWorkersPage />} />
+            <Route path="/my-reviews" element={<MyReviewsPage />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['WORKER']} />}>
