@@ -50,12 +50,15 @@ public class SecurityConfig {
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/auth/**", "/api/health").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/verification", "/api/verification/")
+            .hasRole("WORKER")
+            .requestMatchers("/api/verification/**").authenticated()
             .requestMatchers(HttpMethod.POST, "/api/quotes").hasRole("WORKER")
             .requestMatchers(HttpMethod.POST, "/api/quotes/*/accept").hasRole("SEEKER")
             .requestMatchers(HttpMethod.DELETE, "/api/quotes/**").hasRole("WORKER")
             .requestMatchers(HttpMethod.GET, "/api/quotes/my").hasRole("WORKER")
             .requestMatchers(HttpMethod.PATCH, "/api/quotes/*/accept", "/api/quotes/*/reject")
-                .hasRole("SEEKER")
+            .hasRole("SEEKER")
             .requestMatchers(HttpMethod.GET, "/api/quotes/request/**").hasRole("SEEKER")
             .requestMatchers(HttpMethod.POST, "/api/requests").hasRole("SEEKER")
             .requestMatchers(HttpMethod.GET, "/api/requests/my").hasRole("SEEKER")
@@ -84,14 +87,14 @@ public class SecurityConfig {
 
   @Bean
   public AuthenticationEntryPoint authenticationEntryPoint() {
-    return (request, response, authException) ->
-        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+    return (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED,
+        "Unauthorized");
   }
 
   @Bean
   public AccessDeniedHandler accessDeniedHandler() {
-    return (request, response, accessDeniedException) ->
-        response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+    return (request, response, accessDeniedException) -> response.sendError(HttpServletResponse.SC_FORBIDDEN,
+        "Forbidden");
   }
 
   @Bean
