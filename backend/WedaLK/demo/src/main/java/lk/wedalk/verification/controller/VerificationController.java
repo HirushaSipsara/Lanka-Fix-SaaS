@@ -14,9 +14,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -50,6 +52,24 @@ public class VerificationController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "Verification submitted successfully"));
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<Object>> updateVerificationStatus(
+            @PathVariable Long id,
+            @RequestParam(name = "approve") boolean approve,
+            @RequestBody(required = false) Map<String, Object> requestBody) {
+        AuthenticatedUser currentUser = requireAuthenticatedUser();
+        if (currentUser.role() != Role.ADMIN) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only admins can review verification");
+        }
+
+        // Never trust client-provided status. Server assigns final decision strictly.
+        String status = approve ? "APPROVED" : "REJECTED";
+        String adminNotes = requestBody == null ? null : asString(requestBody.get("adminNotes"));
+
+        reviewWithAuthenticatedAdminId(id, currentUser.userId(), status, adminNotes);
+        return ResponseEntity.ok(ApiResponse.success(null, "Verification status updated successfully"));
     }
 
     private AuthenticatedUser requireAuthenticatedUser() {
