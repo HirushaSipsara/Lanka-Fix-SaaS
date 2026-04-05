@@ -19,6 +19,7 @@ const getJobStatusLabel = (status) => {
   if (status === 'ASSIGNED') return 'Assigned';
   if (status === 'IN_PROGRESS') return 'In Progress';
   if (status === 'COMPLETED') return 'Completed';
+  if (status === 'NOT_COMPLETED') return 'Not Completed';
   return String(status || '').replaceAll('_', ' ');
 };
 
