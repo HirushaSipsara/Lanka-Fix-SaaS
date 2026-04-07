@@ -1,10 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ErrorBanner from '../../components/common/ErrorBanner';
 import { EmptyState, LoadingPanel, PageIntro, SectionCard, StatusPill } from '../../components/ui/PortalPrimitives';
-import { getOpenDisputesPaged } from '../../services/disputeService';
-
-const PAGE_SIZE = 10;
+import { getOpenDisputes } from '../../services/disputeService';
 
 const formatDateTime = (value) => {
 	if (!value) return 'N/A';
@@ -24,6 +22,37 @@ const DisputeReviewPage = () => {
 	const [disputes, setDisputes] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
+
+	useEffect(() => {
+		let ignore = false;
+
+		const fetchOpenDisputes = async () => {
+			setLoading(true);
+			setError('');
+
+			try {
+				const data = await getOpenDisputes();
+				if (!ignore) {
+					setDisputes(Array.isArray(data) ? data : []);
+				}
+			} catch (err) {
+				if (!ignore) {
+					setError(err?.response?.data?.message || 'Failed to load open disputes.');
+					setDisputes([]);
+				}
+			} finally {
+				if (!ignore) {
+					setLoading(false);
+				}
+			}
+		};
+
+		fetchOpenDisputes();
+
+		return () => {
+			ignore = true;
+		};
+	}, []);
 	const [currentPage, setCurrentPage] = useState(0);
 	const [totalPages, setTotalPages] = useState(0);
 	const [totalElements, setTotalElements] = useState(0);
@@ -72,6 +101,7 @@ const DisputeReviewPage = () => {
 				<PageIntro
 					eyebrow="Admin"
 					title="Disputes Management"
+					subtitle="Open a dispute and submit a formal final ruling when your review is complete."
 					subtitle="Review active job conflicts raised after NOT_COMPLETED outcomes."
 					light
 				/>
@@ -80,6 +110,7 @@ const DisputeReviewPage = () => {
 					<div className="flex flex-wrap items-center justify-between gap-3">
 						<h2 className="text-xl font-bold text-ink">Open Disputes</h2>
 						<StatusPill tone="danger" icon="report_problem">
+							{sortedDisputes.length} Open
 							{totalElements} Active
 						</StatusPill>
 					</div>

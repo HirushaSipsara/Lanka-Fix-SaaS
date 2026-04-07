@@ -12,7 +12,7 @@ import {
 import { deleteRequest, getRequestById, updateRequestStatus } from '../../services/requestService';
 import { getQuotesByRequest } from '../../services/quoteService';
 import { getMyReviews, submitReview } from '../../services/reviewService';
-import { submitDispute } from '../../services/disputeService';
+import { getDisputeByRequest, submitDispute } from '../../services/disputeService';
 import { formatBudget, formatCategoryLabel } from '../../utils/constants';
 
 const getJobStatusLabel = (status) => {
@@ -32,6 +32,13 @@ const statusTone = (status) => {
   return 'neutral';
 };
 
+const disputeTone = (status) => {
+  const normalized = String(status || '').toUpperCase();
+  if (normalized === 'RESOLVED') return 'success';
+  if (normalized === 'OPEN') return 'warning';
+  return 'neutral';
+};
+
 const metricAccent = (tone) => {
   if (tone === 'success') return 'border-green-100 bg-green-50/80';
   if (tone === 'warning') return 'border-amber-100 bg-amber-50/80';
@@ -46,6 +53,13 @@ const formatDate = (dateString) => {
     month: 'short',
     day: 'numeric',
   });
+};
+
+const formatDateTime = (value) => {
+  if (!value) return 'N/A';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'N/A';
+  return date.toLocaleString();
 };
 
 const buildTimeline = (request, quoteCount) => {
@@ -149,6 +163,7 @@ const RequestDetailsPage = () => {
   const [notCompletedReasonError, setNotCompletedReasonError] = useState('');
   const [notCompletedSubmitting, setNotCompletedSubmitting] = useState(false);
   const [notCompletedSuccess, setNotCompletedSuccess] = useState(false);
+  const [disputeOutcome, setDisputeOutcome] = useState(null);
 
   const fetchRequestDetails = useCallback(async (showLoading = true) => {
     if (!requestId) return;
@@ -193,6 +208,25 @@ const RequestDetailsPage = () => {
   useEffect(() => {
     fetchQuotes();
   }, [fetchQuotes]);
+
+  const fetchDisputeOutcome = useCallback(async () => {
+    if (!requestId) return;
+
+    try {
+      const dispute = await getDisputeByRequest(Number(requestId));
+      setDisputeOutcome(dispute || null);
+    } catch (err) {
+      if (err?.response?.status === 404) {
+        setDisputeOutcome(null);
+        return;
+      }
+      setDisputeOutcome(null);
+    }
+  }, [requestId]);
+
+  useEffect(() => {
+    fetchDisputeOutcome();
+  }, [fetchDisputeOutcome]);
 
   const loadExistingReview = useCallback(async () => {
     if (!requestId || isWorker || String(request?.status || '').toUpperCase() !== 'COMPLETED') return;
@@ -258,6 +292,7 @@ const RequestDetailsPage = () => {
       setShowNotCompletedModal(false);
       setNotCompletedReason('');
       await fetchRequestDetails(false);
+      await fetchDisputeOutcome();
     } catch (err) {
       setNotCompletedReasonError(err.response?.data?.message || 'Failed to submit. Please try again.');
     } finally {
@@ -512,6 +547,35 @@ const RequestDetailsPage = () => {
                   >
                     <p>{statusUpdateMessage}</p>
                   </AlertPanel>
+                </div>
+              ) : null}
+
+              {disputeOutcome ? (
+                <div className="mt-4 rounded-card border border-line bg-surface-muted/75 px-4 py-4 shadow-soft">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="ui-stat-label">Dispute Outcome</p>
+                    <StatusPill tone={disputeTone(disputeOutcome.status)}>
+                      {String(disputeOutcome.status || 'OPEN').replaceAll('_', ' ')}
+                    </StatusPill>
+                  </div>
+
+                  <p className="mt-3 text-sm font-semibold text-ink">Reason Submitted</p>
+                  <p className="mt-1 text-sm leading-6 text-ink-muted">
+                    {disputeOutcome.seekerReason || 'No dispute reason recorded.'}
+                  </p>
+
+                  <p className="mt-3 text-sm font-semibold text-ink">Admin Final Ruling</p>
+                  <p className="mt-1 text-sm leading-6 text-ink-muted">
+                    {disputeOutcome.status === 'RESOLVED'
+                      ? disputeOutcome.resolution || 'No final ruling note available.'
+                      : 'This dispute is under review. Final decision will appear here once resolved.'}
+                  </p>
+
+                  {disputeOutcome.status === 'RESOLVED' ? (
+                    <p className="mt-2 text-sm text-ink-muted">
+                      Resolved At: <span className="font-semibold text-ink">{formatDateTime(disputeOutcome.resolvedAt)}</span>
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
             </SectionCard>
