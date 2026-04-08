@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { FaCheckCircle } from 'react-icons/fa';
 
@@ -45,6 +45,30 @@ const getServiceCards = (skills) => {
     };
   });
 };
+
+const renderStarIcons = (rating, className = 'text-lg') => (
+  <div className="flex items-center gap-0.5" aria-label={`Rating ${rating.toFixed(1)} out of 5`}>
+    {Array.from({ length: 5 }).map((_, index) => {
+      const starPosition = index + 1;
+      let icon = 'star_border';
+
+      if (rating >= starPosition) {
+        icon = 'star';
+      } else if (rating >= starPosition - 0.5) {
+        icon = 'star_half';
+      }
+
+      return (
+        <span
+          key={starPosition}
+          className={`material-icons ${className} ${icon === 'star_border' ? 'text-ink-subtle/40' : 'text-amber-400'}`}
+        >
+          {icon}
+        </span>
+      );
+    })}
+  </div>
+);
 
 export const WorkerProfileSkeleton = () => (
   <div className="page-wrapper">
@@ -97,12 +121,20 @@ export const WorkerProfileError = ({ message, action }) => (
 export const WorkerProfilePanel = ({ profile, notice, actions, backLink, reviews = [] }) => {
   const serviceCards = getServiceCards(profile.skills);
   const serviceAreas = profile.serviceAreas?.length ? profile.serviceAreas : [profile.district || 'Local Area', 'Nearby Cities'];
+  const reviewItems = useMemo(() => (Array.isArray(reviews) ? reviews : []), [reviews]);
+
+  const averageRating = useMemo(() => {
+    if (reviewItems.length === 0) return 0;
+
+    const total = reviewItems.reduce((sum, review) => sum + (Number(review.rating) || 0), 0);
+    return total / reviewItems.length;
+  }, [reviewItems]);
 
   const stats = [
     {
       label: 'Rating',
-      value: profile.averageRating && Number(profile.averageRating) > 0
-        ? `${Number(profile.averageRating).toFixed(1)}/5`
+      value: averageRating > 0
+        ? `${averageRating.toFixed(1)}/5`
         : 'No ratings yet',
       icon: 'star',
       palette: 'rating',
@@ -184,6 +216,11 @@ export const WorkerProfilePanel = ({ profile, notice, actions, backLink, reviews
                     {item.icon}
                   </span>
                   <p className="mt-3 text-2xl font-extrabold text-ink">{item.value}</p>
+                  {item.label === 'Rating' && averageRating > 0 ? (
+                    <div className="mt-2 flex justify-center">
+                      {renderStarIcons(averageRating, 'text-base')}
+                    </div>
+                  ) : null}
                   <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-ink-subtle">{item.label}</p>
                 </div>
               ))}
@@ -252,23 +289,29 @@ export const WorkerProfilePanel = ({ profile, notice, actions, backLink, reviews
             <section>
               <div className="flex items-center justify-between gap-4">
                 <h2 className="text-xl font-bold text-ink sm:text-2xl">Seeker Reviews</h2>
-                {reviews.length > 0 ? (
+                {reviewItems.length > 0 ? (
                   <span className="rounded-chip bg-surface-muted px-3 py-1 text-sm font-semibold text-ink-muted">
-                    {reviews.length} review{reviews.length !== 1 ? 's' : ''}
+                    {reviewItems.length} review{reviewItems.length !== 1 ? 's' : ''}
                   </span>
                 ) : null}
               </div>
 
-              {reviews.length === 0 ? (
+              {averageRating > 0 ? (
+                <div className="mt-3 flex flex-wrap items-center gap-3 rounded-card border border-line bg-surface-muted/60 px-4 py-3">
+                  <p className="text-sm font-semibold text-ink">Average rating: {averageRating.toFixed(1)}</p>
+                  {renderStarIcons(averageRating)}
+                </div>
+              ) : null}
+
+              {reviewItems.length === 0 ? (
                 <div className="mt-4 rounded-card border border-line bg-surface-muted/60 px-6 py-8 text-center">
                   <span className="material-icons text-4xl text-ink-subtle">rate_review</span>
-                  <p className="mt-3 text-sm font-semibold text-ink-muted">No reviews yet</p>
-                  <p className="mt-1 text-xs text-ink-subtle">Reviews from seekers will appear here after completed jobs.</p>
+                  <p className="mt-3 text-sm font-semibold text-ink-muted">This worker has not received any reviews yet.</p>
                 </div>
               ) : (
                 <div className="mt-4 space-y-4">
-                  {reviews.map((review) => (
-                    <div key={review.id} className="rounded-card border border-line bg-white p-5 shadow-soft">
+                  {reviewItems.map((review, index) => (
+                    <div key={`${review.reviewerName || 'review'}-${review.createdAt || index}`} className="rounded-card border border-line bg-white p-5 shadow-soft">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-center gap-3">
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-sm font-bold text-white">
@@ -285,7 +328,7 @@ export const WorkerProfilePanel = ({ profile, notice, actions, backLink, reviews
                           {Array.from({ length: 5 }).map((_, i) => (
                             <span
                               key={i}
-                              className={`material-icons text-lg ${i < review.rating ? 'text-amber-400' : 'text-ink-subtle/30'}`}
+                              className={`material-icons text-lg ${i < (Number(review.rating) || 0) ? 'text-amber-400' : 'text-ink-subtle/30'}`}
                             >
                               star
                             </span>
