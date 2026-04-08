@@ -10,6 +10,7 @@ import lk.wedalk.requests.model.ServiceRequest;
 import lk.wedalk.requests.repository.ServiceRequestRepository;
 import lk.wedalk.reviews.dto.ReviewCreateRequest;
 import lk.wedalk.reviews.dto.ReviewResponse;
+import lk.wedalk.reviews.dto.WorkerReviewResponse;
 import lk.wedalk.reviews.model.Review;
 import lk.wedalk.reviews.repository.ReviewRepository;
 import lk.wedalk.users.model.Role;
@@ -108,9 +109,9 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    public List<ReviewResponse> getReviewsForWorker(Long workerId) {
-        List<Review> reviews = reviewRepository.findByWorkerId(workerId);
-        return reviews.stream().map(this::mapToResponse).collect(Collectors.toList());
+    public List<WorkerReviewResponse> getReviewsForWorker(Long workerId) {
+        List<Review> reviews = reviewRepository.findByWorkerIdWithSeekerOrderByCreatedAtDesc(workerId);
+        return reviews.stream().map(this::mapToWorkerReviewResponse).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -133,6 +134,15 @@ public class ReviewService {
                 .reviewerName(review.getSeeker().getFullName())
                 .revieweeId(review.getWorker().getId())
                 .revieweeName(review.getWorker().getFullName())
+                .rating(review.getRating())
+                .comment(review.getComment())
+                .createdAt(review.getCreatedAt())
+                .build();
+    }
+
+    private WorkerReviewResponse mapToWorkerReviewResponse(Review review) {
+        return WorkerReviewResponse.builder()
+                .reviewerName(review.getSeeker().getFullName())
                 .rating(review.getRating())
                 .comment(review.getComment())
                 .createdAt(review.getCreatedAt())

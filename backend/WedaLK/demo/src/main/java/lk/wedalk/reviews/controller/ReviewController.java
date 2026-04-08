@@ -6,6 +6,7 @@ import lk.wedalk.common.ApiResponse;
 import lk.wedalk.common.exceptions.NotFoundException;
 import lk.wedalk.reviews.dto.ReviewCreateRequest;
 import lk.wedalk.reviews.dto.ReviewResponse;
+import lk.wedalk.reviews.dto.WorkerReviewResponse;
 import lk.wedalk.reviews.service.ReviewService;
 import lk.wedalk.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,10 +19,13 @@ import org.springframework.web.bind.annotation.*;
 /**
  * ReviewController.java — Review REST Controller
  *
- * <p>Exposes review creation and retrieval APIs.
+ * <p>
+ * Exposes review creation and retrieval APIs.
  *
- * <p>SCRUM-94: The POST endpoint delegates ownership validation to ReviewService,
- * which verifies the authenticated seeker is the original author of the ServiceRequest.
+ * <p>
+ * SCRUM-94: The POST endpoint delegates ownership validation to ReviewService,
+ * which verifies the authenticated seeker is the original author of the
+ * ServiceRequest.
  */
 @RestController
 @RequestMapping("/api/reviews")
@@ -44,7 +48,8 @@ public class ReviewController {
     /**
      * POST /api/reviews — Create a review (seeker, after completion).
      *
-     * <p>SCRUM-94: Only the seeker who originally posted the service request
+     * <p>
+     * SCRUM-94: Only the seeker who originally posted the service request
      * can submit a review. Workers are blocked entirely.
      */
     @PostMapping
@@ -59,9 +64,9 @@ public class ReviewController {
      * GET /api/reviews/worker/{workerId} — Get all reviews for a worker.
      */
     @GetMapping("/worker/{workerId}")
-    public ResponseEntity<ApiResponse<List<ReviewResponse>>> getReviewsForWorker(
+    public ResponseEntity<ApiResponse<List<WorkerReviewResponse>>> getReviewsForWorker(
             @PathVariable Long workerId) {
-        List<ReviewResponse> reviews = reviewService.getReviewsForWorker(workerId);
+        List<WorkerReviewResponse> reviews = reviewService.getReviewsForWorker(workerId);
         return ResponseEntity.ok(ApiResponse.success(reviews, "Reviews retrieved successfully"));
     }
 
