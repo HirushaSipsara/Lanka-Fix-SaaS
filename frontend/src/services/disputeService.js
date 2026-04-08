@@ -69,3 +69,14 @@ export const getOpenDisputesPaged = async (params = {}) => {
   const response = await apiClient.get(`/disputes/open?${query.toString()}`);
   return response.data.data;
 };
+
+/**
+ * Resolve a dispute (admin only).
+ * @param {number} id - Dispute ID
+ * @param {string} resolution - Final ruling note
+ * @returns {Promise<Object>} Resolved dispute details
+ */
+export const resolveDispute = async (id, resolution) => {
+  const response = await apiClient.put(`/disputes/${id}/resolve`, { resolution });
+  return response.data.data;
+};

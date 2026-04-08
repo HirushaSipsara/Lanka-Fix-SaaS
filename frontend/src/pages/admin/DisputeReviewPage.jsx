@@ -1,8 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ErrorBanner from '../../components/common/ErrorBanner';
 import { EmptyState, LoadingPanel, PageIntro, SectionCard, StatusPill } from '../../components/ui/PortalPrimitives';
-import { getOpenDisputes } from '../../services/disputeService';
+import { getOpenDisputes, getOpenDisputesPaged } from '../../services/disputeService';
+
+const PAGE_SIZE = 10;
 
 const formatDateTime = (value) => {
 	if (!value) return 'N/A';
@@ -101,7 +103,6 @@ const DisputeReviewPage = () => {
 				<PageIntro
 					eyebrow="Admin"
 					title="Disputes Management"
-					subtitle="Open a dispute and submit a formal final ruling when your review is complete."
 					subtitle="Review active job conflicts raised after NOT_COMPLETED outcomes."
 					light
 				/>

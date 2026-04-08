@@ -26,9 +26,6 @@ const AdminDashboard = () => (
           Access active moderation workflows directly from the dashboard.
         </p>
         <div className="grid gap-3 md:grid-cols-2">
-          Open admin workflows directly from this dashboard.
-        </p>
-        <div className="grid gap-3 md:grid-cols-2">
           <Link to="/admin/verification" className="ui-button-secondary w-full justify-center">
             <span className="material-icons text-base">fact_check</span>
             Open Verification Review
