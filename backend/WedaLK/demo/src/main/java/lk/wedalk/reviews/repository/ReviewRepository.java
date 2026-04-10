@@ -20,6 +20,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review> findByWorkerId(Long workerId);
 
+    @Query("SELECT r FROM Review r JOIN FETCH r.seeker WHERE r.worker.id = :workerId ORDER BY r.createdAt DESC")
+    List<Review> findByWorkerIdWithSeekerOrderByCreatedAtDesc(@Param("workerId") Long workerId);
+
     List<Review> findBySeekerId(Long seekerId);
 
     List<Review> findBySeekerIdOrderByCreatedAtDesc(Long seekerId);
