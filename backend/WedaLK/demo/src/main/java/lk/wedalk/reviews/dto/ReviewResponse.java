@@ -1,13 +1,29 @@
 package lk.wedalk.reviews.dto;
 
+import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 /**
  * ReviewResponse.java — Review Response DTO
  *
- * <p>This file should contain: - Fields: - Long id - Long requestId - String requestTitle - Long
- * reviewerId - String reviewerName - Long revieweeId - String revieweeName - int rating - String
- * comment - LocalDateTime createdAt -
- * Lombok: @Data, @Builder, @NoArgsConstructor, @AllArgsConstructor - Static method:
- * fromEntity(Review review)
- *
- * <p>Purpose: Returned when fetching reviews for a worker or a request.
+ * <p>Returned to clients after review creation or retrieval.
  */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ReviewResponse {
+
+    private Long id;
+    private Long requestId;
+    private Long reviewerId;
+    private String reviewerName;
+    private Long revieweeId;
+    private String revieweeName;
+    private int rating;
+    private String comment;
+    private LocalDateTime createdAt;
+}

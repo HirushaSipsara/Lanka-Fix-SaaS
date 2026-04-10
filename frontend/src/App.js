@@ -16,17 +16,24 @@ import MyRequestsPage from './pages/seeker/MyRequestsPage';
 import RequestDetailsPage from './pages/seeker/RequestDetailsPage';
 import BrowseWorkersPage from './pages/seeker/BrowseWorkersPage';
 import CompareQuotesPage from './pages/seeker/CompareQuotesPage';
+import MyReviewsPage from './pages/seeker/MyReviewsPage';
 import WorkerDashboard from './pages/worker/WorkerDashboard';
 import BrowseRequestsPage from './pages/worker/BrowseRequestsPage';
 import WorkerRequestDetailsPage from './pages/worker/WorkerRequestDetailsPage';
 import SubmitQuotePage from './pages/worker/SubmitQuotePage';
 import MyQuotationsPage from './pages/worker/MyQuotationsPage';
 import MyJobsPage from './pages/worker/MyJobsPage';
+import VerificationPage from './pages/worker/VerificationPage';
 
 
 import EditWorkerProfilePage from './pages/worker/EditWorkerProfilePage';
 import WorkerProfilePage from './pages/worker/WorkerProfilePage';
 import AdminDashboard from './pages/admin/AdminDashboard';
+
+import DisputeDetailsPage from './pages/admin/DisputeDetailsPage';
+import VerificationReviewPage from './pages/admin/VerificationReviewPage';
+import DisputeReviewPage from './pages/admin/DisputeReviewPage';
+import AdminJobDetailsPage from './pages/admin/AdminJobDetailsPage';
 import AccountProfilePage from './pages/account/AccountProfilePage';
 import RequireWorkerProfile from './components/common/RequireWorkerProfile';
 
@@ -53,6 +60,7 @@ function App() {
               element={<CompareQuotesPage />}
             />
             <Route path="/browse-workers" element={<BrowseWorkersPage />} />
+            <Route path="/my-reviews" element={<MyReviewsPage />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['WORKER']} />}>
@@ -62,6 +70,7 @@ function App() {
             <Route path="/create-profile" element={<EditWorkerProfilePage />} />
             <Route path="/edit-profile/:id" element={<EditWorkerProfilePage />} />
             <Route path="/profile/:id" element={<WorkerProfilePage />} />
+            <Route path="/worker/verification" element={<VerificationPage />} />
 
             <Route element={<RequireWorkerProfile />}>
               <Route path="/requests/:requestId/quote" element={<SubmitQuotePage />} />
@@ -72,6 +81,11 @@ function App() {
 
           <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/disputes" element={<DisputeReviewPage />} />
+            <Route path="/admin/disputes/:disputeId" element={<DisputeDetailsPage />} />
+            <Route path="/admin/verification" element={<VerificationReviewPage />} />
+           
+            <Route path="/admin/jobs/:requestId" element={<AdminJobDetailsPage />} />
           </Route>
 
           {/* Any authenticated user */}

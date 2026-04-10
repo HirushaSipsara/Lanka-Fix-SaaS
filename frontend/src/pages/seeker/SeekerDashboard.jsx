@@ -357,6 +357,16 @@ const SeekerDashboard = () => {
                       <span className="mt-1 block text-sm leading-6 text-ink-muted">Explore skilled professionals before assigning your next job.</span>
                     </span>
                   </Link>
+
+                  <Link to="/my-reviews" className="flex items-start gap-3 rounded-card border border-line bg-surface-muted px-4 py-3.5 transition hover:border-brand-200 hover:bg-brand-50/60">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                      <span className="material-icons">rate_review</span>
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-bold text-ink">My reviews</span>
+                      <span className="mt-1 block text-sm leading-6 text-ink-muted">View all feedback you have submitted for completed jobs.</span>
+                    </span>
+                  </Link>
                 </div>
               </SectionCard>
             </aside>

@@ -1,14 +1,34 @@
 package lk.wedalk.disputes.dto;
 
+import java.time.LocalDateTime;
+import lk.wedalk.common.enums.DisputeStatus;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 /**
  * DisputeResponse.java — Dispute Response DTO
  *
- * <p>This file should contain: - Fields: - Long id - Long requestId - String requestTitle - Long
- * seekerId - String seekerName - Long workerId - String workerName - String seekerReason - String
- * workerResponse - DisputeStatus status - String resolution - String resolvedByName - LocalDateTime
- * createdAt - LocalDateTime resolvedAt -
- * Lombok: @Data, @Builder, @NoArgsConstructor, @AllArgsConstructor - Static method:
- * fromEntity(Dispute dispute)
- *
- * <p>Purpose: Returned when fetching dispute details for admin or user views.
+ * <p>Returned to clients after dispute creation or retrieval.
  */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class DisputeResponse {
+
+    private Long id;
+    private Long requestId;
+    private String requestTitle;
+    private Long seekerId;
+    private String seekerName;
+    private Long workerId;
+    private String workerName;
+    private String seekerReason;
+    private String workerResponse;
+    private DisputeStatus status;
+    private String resolution;
+    private LocalDateTime resolvedAt;
+    private LocalDateTime createdAt;
+}

@@ -1,13 +1,36 @@
 package lk.wedalk.reviews.repository;
 
+import java.util.List;
+import java.util.Optional;
+import lk.wedalk.reviews.model.Review;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
 /**
  * ReviewRepository.java — Review Data Access Layer
  *
- * <p>This file should contain: - Interface extending JpaRepository<Review, Long> - Custom query
- * methods: - List<Review> findByRevieweeId(Long revieweeId) - List<Review> findByReviewerId(Long
- * reviewerId) - Optional<Review> findByRequestIdAndReviewerId(Long requestId, Long reviewerId) -
- * boolean existsByRequestIdAndReviewerId(Long requestId, Long reviewerId) - @Query to calculate
- * average rating for a worker: Double findAverageRatingByRevieweeId(Long revieweeId)
- *
- * <p>Purpose: Data access for reviews — supports lookup by worker, seeker, and rating calculations.
+ * <p>
+ * Data access for reviews — supports lookup by worker, seeker, and rating
+ * calculations.
  */
+@Repository
+public interface ReviewRepository extends JpaRepository<Review, Long> {
+
+    List<Review> findByWorkerId(Long workerId);
+
+    @Query("SELECT r FROM Review r JOIN FETCH r.seeker WHERE r.worker.id = :workerId ORDER BY r.createdAt DESC")
+    List<Review> findByWorkerIdWithSeekerOrderByCreatedAtDesc(@Param("workerId") Long workerId);
+
+    List<Review> findBySeekerId(Long seekerId);
+
+    List<Review> findBySeekerIdOrderByCreatedAtDesc(Long seekerId);
+
+    Optional<Review> findByRequestIdAndSeekerId(Long requestId, Long seekerId);
+
+    boolean existsByRequestIdAndSeekerId(Long requestId, Long seekerId);
+
+    @Query("SELECT AVG(r.rating) FROM Review r WHERE r.worker.id = :workerId")
+    Double findAverageRatingByWorkerId(@Param("workerId") Long workerId);
+}

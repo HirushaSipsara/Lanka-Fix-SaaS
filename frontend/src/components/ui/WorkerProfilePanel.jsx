@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { FaCheckCircle } from 'react-icons/fa';
 
 const serviceMap = {
   Plumbing: { icon: 'plumbing', title: 'Plumbing Services', desc: 'Pipe repairs, installations, and maintenance' },
@@ -44,6 +45,30 @@ const getServiceCards = (skills) => {
     };
   });
 };
+
+const renderStarIcons = (rating, className = 'text-lg') => (
+  <div className="flex items-center gap-0.5" aria-label={`Rating ${rating.toFixed(1)} out of 5`}>
+    {Array.from({ length: 5 }).map((_, index) => {
+      const starPosition = index + 1;
+      let icon = 'star_border';
+
+      if (rating >= starPosition) {
+        icon = 'star';
+      } else if (rating >= starPosition - 0.5) {
+        icon = 'star_half';
+      }
+
+      return (
+        <span
+          key={starPosition}
+          className={`material-icons ${className} ${icon === 'star_border' ? 'text-ink-subtle/40' : 'text-amber-400'}`}
+        >
+          {icon}
+        </span>
+      );
+    })}
+  </div>
+);
 
 export const WorkerProfileSkeleton = () => (
   <div className="page-wrapper">
@@ -93,16 +118,48 @@ export const WorkerProfileError = ({ message, action }) => (
   </div>
 );
 
-export const WorkerProfilePanel = ({ profile, notice, actions, backLink }) => {
+export const WorkerProfilePanel = ({ profile, notice, actions, backLink, reviews = [] }) => {
   const serviceCards = getServiceCards(profile.skills);
   const serviceAreas = profile.serviceAreas?.length ? profile.serviceAreas : [profile.district || 'Local Area', 'Nearby Cities'];
+  const reviewItems = useMemo(() => (Array.isArray(reviews) ? reviews : []), [reviews]);
+
+  const averageRating = useMemo(() => {
+    if (reviewItems.length === 0) return 0;
+
+    const total = reviewItems.reduce((sum, review) => sum + (Number(review.rating) || 0), 0);
+    return total / reviewItems.length;
+  }, [reviewItems]);
 
   const stats = [
-    { label: 'Rating', value: profile.averageRating ? `${Number(profile.averageRating).toFixed(1)}/5` : '4.9/5', icon: 'star', palette: 'rating' },
-    { label: 'Jobs Done', value: profile.totalJobsCompleted ?? 186, icon: 'work', palette: 'jobs' },
-    { label: 'Years Exp.', value: profile.yearsExperience ? `${profile.yearsExperience}+` : '10+', icon: 'emoji_events', palette: 'experience' },
-    { label: 'Location', value: profile.district || 'N/A', icon: 'location_on', palette: 'location' },
+    {
+      label: 'Rating',
+      value: averageRating > 0
+        ? `${averageRating.toFixed(1)}/5`
+        : 'No ratings yet',
+      icon: 'star',
+      palette: 'rating',
+    },
+    {
+      label: 'Jobs Done',
+      value: typeof profile.totalJobsCompleted === 'number' ? profile.totalJobsCompleted : '—',
+      icon: 'work',
+      palette: 'jobs',
+    },
+    {
+      label: 'Years Exp.',
+      value: profile.yearsExperience ? `${profile.yearsExperience}+` : '—',
+      icon: 'emoji_events',
+      palette: 'experience',
+    },
+    {
+      label: 'Location',
+      value: profile.district || 'N/A',
+      icon: 'location_on',
+      palette: 'location',
+    },
   ];
+
+  const isVerified = profile.verificationStatus === 'APPROVED';
 
   return (
     <div className="page-wrapper">
@@ -123,21 +180,27 @@ export const WorkerProfilePanel = ({ profile, notice, actions, backLink }) => {
                   ) : (
                     <span>{profile.fullName ? profile.fullName.charAt(0).toUpperCase() : 'W'}</span>
                   )}
-                  <span className="absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-brand-700 text-white">
-                    <span className="material-icons text-sm">verified</span>
-                  </span>
                 </div>
 
                 <div className="min-w-0">
-                  <h1 className="font-display text-2xl font-extrabold tracking-snugger text-ink sm:text-3xl">
-                    {profile.fullName || 'Worker'}
+                  <h1 className="flex items-center gap-2 font-display text-2xl font-extrabold tracking-snugger text-ink sm:text-3xl">
+                    <span>{profile.fullName || 'Worker'}</span>
+                    {isVerified ? (
+                      <FaCheckCircle
+                        className="text-xl text-brand-700"
+                        title="Identity verified by platform administrators."
+                        aria-label="Identity verified by platform administrators."
+                      />
+                    ) : null}
                   </h1>
                   <p className="mt-2 text-base font-medium text-brand-800">
-                    Verified Skilled {getPrimarySkill(profile.skills)}
+                    {isVerified ? `Verified Skilled ${getPrimarySkill(profile.skills)}` : `Skilled ${getPrimarySkill(profile.skills)}`}
                   </p>
-                  <p className="mt-1 text-sm text-ink-muted">
-                    Member since July 2021 • Response time: &lt; 2 hours
-                  </p>
+                  {profile.availability ? (
+                    <p className="mt-1 text-sm text-ink-muted">
+                      Available: {profile.availability}
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
@@ -153,6 +216,11 @@ export const WorkerProfilePanel = ({ profile, notice, actions, backLink }) => {
                     {item.icon}
                   </span>
                   <p className="mt-3 text-2xl font-extrabold text-ink">{item.value}</p>
+                  {item.label === 'Rating' && averageRating > 0 ? (
+                    <div className="mt-2 flex justify-center">
+                      {renderStarIcons(averageRating, 'text-base')}
+                    </div>
+                  ) : null}
                   <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-ink-subtle">{item.label}</p>
                 </div>
               ))}
@@ -220,20 +288,62 @@ export const WorkerProfilePanel = ({ profile, notice, actions, backLink }) => {
 
             <section>
               <div className="flex items-center justify-between gap-4">
-                <h2 className="text-xl font-bold text-ink sm:text-2xl">Portfolio & Past Work</h2>
-                <button type="button" className="text-sm font-semibold text-brand-800 transition hover:text-brand-900">
-                  View All
-                </button>
+                <h2 className="text-xl font-bold text-ink sm:text-2xl">Seeker Reviews</h2>
+                {reviewItems.length > 0 ? (
+                  <span className="rounded-chip bg-surface-muted px-3 py-1 text-sm font-semibold text-ink-muted">
+                    {reviewItems.length} review{reviewItems.length !== 1 ? 's' : ''}
+                  </span>
+                ) : null}
               </div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className="aspect-[4/5] rounded-card border border-line bg-surface-muted">
-                    <div className="flex h-full items-center justify-center text-ink-subtle">
-                      <span className="material-icons text-4xl">image</span>
+
+              {averageRating > 0 ? (
+                <div className="mt-3 flex flex-wrap items-center gap-3 rounded-card border border-line bg-surface-muted/60 px-4 py-3">
+                  <p className="text-sm font-semibold text-ink">Average rating: {averageRating.toFixed(1)}</p>
+                  {renderStarIcons(averageRating)}
+                </div>
+              ) : null}
+
+              {reviewItems.length === 0 ? (
+                <div className="mt-4 rounded-card border border-line bg-surface-muted/60 px-6 py-8 text-center">
+                  <span className="material-icons text-4xl text-ink-subtle">rate_review</span>
+                  <p className="mt-3 text-sm font-semibold text-ink-muted">This worker has not received any reviews yet.</p>
+                </div>
+              ) : (
+                <div className="mt-4 space-y-4">
+                  {reviewItems.map((review, index) => (
+                    <div key={`${review.reviewerName || 'review'}-${review.createdAt || index}`} className="rounded-card border border-line bg-white p-5 shadow-soft">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-sm font-bold text-white">
+                            {review.reviewerName ? review.reviewerName.charAt(0).toUpperCase() : '?'}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-ink">{review.reviewerName || 'Anonymous'}</p>
+                            <p className="text-xs text-ink-subtle">
+                              {review.createdAt ? new Date(review.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : ''}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-0.5">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <span
+                              key={i}
+                              className={`material-icons text-lg ${i < (Number(review.rating) || 0) ? 'text-amber-400' : 'text-ink-subtle/30'}`}
+                            >
+                              star
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      {review.comment ? (
+                        <p className="mt-4 text-sm leading-7 text-ink-muted">{review.comment}</p>
+                      ) : (
+                        <p className="mt-4 text-sm italic text-ink-subtle">No comment left.</p>
+                      )}
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </section>
           </div>
         </section>

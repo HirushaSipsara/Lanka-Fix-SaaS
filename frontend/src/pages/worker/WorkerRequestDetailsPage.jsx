@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { getRequestById } from '../../services/requestService';
+import { getDisputeByRequest } from '../../services/disputeService';
 import { formatBudget, formatCategoryLabel, getCategoryIcon } from '../../utils/constants';
 import { AlertPanel, EmptyState, LoadingPanel, PageIntro, StatusPill } from '../../components/ui/PortalPrimitives';
 
@@ -11,6 +12,20 @@ const urgencyTone = (urgency) => {
   return 'info';
 };
 
+const formatDateTime = (value) => {
+  if (!value) return 'N/A';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'N/A';
+  return date.toLocaleString();
+};
+
+const disputeTone = (status) => {
+  const normalized = String(status || '').toUpperCase();
+  if (normalized === 'RESOLVED') return 'success';
+  if (normalized === 'OPEN') return 'warning';
+  return 'neutral';
+};
+
 const WorkerRequestDetailsPage = () => {
   const { requestId } = useParams();
   const navigate = useNavigate();
@@ -18,6 +33,7 @@ const WorkerRequestDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [is404, setIs404] = useState(false);
+  const [disputeOutcome, setDisputeOutcome] = useState(null);
 
   useEffect(() => {
     const fetchRequest = async () => {
@@ -43,8 +59,22 @@ const WorkerRequestDetailsPage = () => {
       }
     };
 
+    const fetchDisputeOutcome = async () => {
+      try {
+        const dispute = await getDisputeByRequest(requestId);
+        setDisputeOutcome(dispute || null);
+      } catch (err) {
+        if (err?.response?.status === 404) {
+          setDisputeOutcome(null);
+          return;
+        }
+        setDisputeOutcome(null);
+      }
+    };
+
     if (requestId) {
       fetchRequest();
+      fetchDisputeOutcome();
     }
   }, [requestId]);
 
@@ -153,6 +183,35 @@ const WorkerRequestDetailsPage = () => {
                 <h2 className="text-xl font-bold text-ink">Job Description</h2>
                 <p className="mt-3 text-sm leading-7 text-ink-muted">{request.description}</p>
               </div>
+
+              {disputeOutcome ? (
+                <div className="mt-6 rounded-card border border-line bg-white px-5 py-5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h2 className="text-xl font-bold text-ink">Dispute Outcome</h2>
+                    <StatusPill tone={disputeTone(disputeOutcome.status)}>
+                      {String(disputeOutcome.status || 'OPEN').replaceAll('_', ' ')}
+                    </StatusPill>
+                  </div>
+
+                  <p className="mt-4 text-sm font-semibold text-ink">Raised Reason</p>
+                  <p className="mt-1 text-sm leading-7 text-ink-muted">
+                    {disputeOutcome.seekerReason || 'No reason provided.'}
+                  </p>
+
+                  <p className="mt-4 text-sm font-semibold text-ink">Admin Final Decision</p>
+                  <p className="mt-1 text-sm leading-7 text-ink-muted">
+                    {disputeOutcome.status === 'RESOLVED'
+                      ? disputeOutcome.resolution || 'No final ruling note available.'
+                      : 'This dispute is currently being reviewed by an administrator.'}
+                  </p>
+
+                  {disputeOutcome.status === 'RESOLVED' ? (
+                    <p className="mt-2 text-sm text-ink-muted">
+                      Resolved At: <span className="font-semibold text-ink">{formatDateTime(disputeOutcome.resolvedAt)}</span>
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
 
               <div className="mt-5 grid gap-4 md:grid-cols-2">
                 <div className="ui-section">

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
 import Breadcrumb from '../../components/common/Breadcrumb';
+import ErrorBanner from '../../components/common/ErrorBanner';
 import {
   AlertPanel,
   EmptyState,
@@ -10,12 +11,16 @@ import {
 } from '../../components/ui/PortalPrimitives';
 import { deleteRequest, getRequestById, updateRequestStatus } from '../../services/requestService';
 import { getQuotesByRequest } from '../../services/quoteService';
+import { getMyReviews, submitReview } from '../../services/reviewService';
+import { getDisputeByRequest, submitDispute } from '../../services/disputeService';
 import { formatBudget, formatCategoryLabel } from '../../utils/constants';
+import { resolveHttpError } from '../../utils/httpErrors';
 
 const getJobStatusLabel = (status) => {
   if (status === 'ASSIGNED') return 'Assigned';
   if (status === 'IN_PROGRESS') return 'In Progress';
   if (status === 'COMPLETED') return 'Completed';
+  if (status === 'NOT_COMPLETED') return 'Not Completed';
   return String(status || '').replaceAll('_', ' ');
 };
 
@@ -25,6 +30,13 @@ const statusTone = (status) => {
   if (normalized === 'ASSIGNED' || normalized === 'IN_PROGRESS') return 'warning';
   if (normalized === 'COMPLETED') return 'success';
   if (normalized === 'NOT_COMPLETED' || normalized === 'CANCELLED') return 'danger';
+  return 'neutral';
+};
+
+const disputeTone = (status) => {
+  const normalized = String(status || '').toUpperCase();
+  if (normalized === 'RESOLVED') return 'success';
+  if (normalized === 'OPEN') return 'warning';
   return 'neutral';
 };
 
@@ -42,6 +54,13 @@ const formatDate = (dateString) => {
     month: 'short',
     day: 'numeric',
   });
+};
+
+const formatDateTime = (value) => {
+  if (!value) return 'N/A';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'N/A';
+  return date.toLocaleString();
 };
 
 const buildTimeline = (request, quoteCount) => {
@@ -81,6 +100,43 @@ const previewDescription = (text) => {
   return text;
 };
 
+const StarRatingInput = ({ value, onChange, disabled }) => (
+  <div className="flex items-center gap-1">
+    {[1, 2, 3, 4, 5].map((star) => (
+      <button
+        key={star}
+        type="button"
+        onClick={() => onChange(star)}
+        disabled={disabled}
+        className={`text-3xl transition-colors ${star <= (value || 0) ? 'text-amber-400' : 'text-gray-300'} hover:text-amber-400 disabled:cursor-not-allowed disabled:opacity-60`}
+        aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+      >
+        <span className="material-icons">star</span>
+      </button>
+    ))}
+    <span className="ml-2 text-sm font-semibold text-ink-muted">{value ? `${value} / 5` : 'Select rating'}</span>
+  </div>
+);
+
+const StarRatingDisplay = ({ rating }) => {
+  const normalized = Math.min(5, Math.max(1, Number(rating) || 0));
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex items-center gap-0.5" aria-label={`${normalized} out of 5 stars`}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <span
+            key={i}
+            className={`material-icons text-lg ${i < normalized ? 'text-amber-400' : 'text-gray-300'}`}
+          >
+            star
+          </span>
+        ))}
+      </div>
+      <span className="text-sm font-semibold text-ink-muted">{normalized}/5</span>
+    </div>
+  );
+};
+
 const RequestDetailsPage = () => {
   const { requestId } = useParams();
   const navigate = useNavigate();
@@ -94,6 +150,21 @@ const RequestDetailsPage = () => {
   const [quotes, setQuotes] = useState([]);
   const [quotesLoading, setQuotesLoading] = useState(false);
   const [quotesError, setQuotesError] = useState('');
+
+  // Review form state
+  const [reviewRating, setReviewRating] = useState(null);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+  const [existingReview, setExistingReview] = useState(null);
+
+  // Not Completed modal state (SCRUM-89)
+  const [showNotCompletedModal, setShowNotCompletedModal] = useState(false);
+  const [notCompletedReason, setNotCompletedReason] = useState('');
+  const [notCompletedReasonError, setNotCompletedReasonError] = useState('');
+  const [notCompletedSubmitting, setNotCompletedSubmitting] = useState(false);
+  const [notCompletedSuccess, setNotCompletedSuccess] = useState(false);
+  const [disputeOutcome, setDisputeOutcome] = useState(null);
 
   const fetchRequestDetails = useCallback(async (showLoading = true) => {
     if (!requestId) return;
@@ -138,6 +209,97 @@ const RequestDetailsPage = () => {
   useEffect(() => {
     fetchQuotes();
   }, [fetchQuotes]);
+
+  const fetchDisputeOutcome = useCallback(async () => {
+    if (!requestId) return;
+
+    try {
+      const dispute = await getDisputeByRequest(Number(requestId));
+      setDisputeOutcome(dispute || null);
+    } catch (err) {
+      if (err?.response?.status === 404) {
+        setDisputeOutcome(null);
+        return;
+      }
+      setDisputeOutcome(null);
+    }
+  }, [requestId]);
+
+  useEffect(() => {
+    fetchDisputeOutcome();
+  }, [fetchDisputeOutcome]);
+
+  const loadExistingReview = useCallback(async () => {
+    if (!requestId || isWorker || String(request?.status || '').toUpperCase() !== 'COMPLETED') return;
+    try {
+      const reviews = await getMyReviews();
+      const matched = (Array.isArray(reviews) ? reviews : []).find(
+        (review) => Number(review.requestId) === Number(requestId),
+      );
+      setExistingReview(matched || null);
+      if (matched) {
+        setReviewRating(matched.rating);
+        setReviewComment(matched.comment || '');
+      }
+    } catch {
+      // Ignore lookup failures to avoid interrupting request details page load.
+    }
+  }, [isWorker, request?.status, requestId]);
+
+  useEffect(() => {
+    loadExistingReview();
+  }, [loadExistingReview]);
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (!reviewRating) {
+      setReviewError('Please select a star rating to submit your review');
+      return;
+    }
+
+    setReviewSubmitting(true);
+    setReviewError('');
+    try {
+      const createdReview = await submitReview({ requestId: Number(requestId), rating: reviewRating, comment: reviewComment });
+      setExistingReview({
+        ...createdReview,
+        rating: createdReview?.rating ?? reviewRating,
+        comment: createdReview?.comment ?? reviewComment,
+      });
+    } catch (err) {
+      const message = resolveHttpError(err, 'Failed to submit review. Please try again.');
+      setReviewError(message);
+      if (err.response?.status === 409 || message.toLowerCase().includes('already submitted')) {
+        await loadExistingReview();
+      }
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
+  // SCRUM-89: Handle "Mark as Not Completed" modal submission
+  // Calls POST /api/disputes which atomically sets status to NOT_COMPLETED + creates OPEN dispute
+  const handleNotCompletedSubmit = async (e) => {
+    e.preventDefault();
+    if (!notCompletedReason.trim()) {
+      setNotCompletedReasonError('Please provide a reason so our admins can assist you.');
+      return;
+    }
+    setNotCompletedReasonError('');
+    setNotCompletedSubmitting(true);
+    try {
+      await submitDispute({ requestId: Number(requestId), reason: notCompletedReason });
+      setNotCompletedSuccess(true);
+      setShowNotCompletedModal(false);
+      setNotCompletedReason('');
+      await fetchRequestDetails(false);
+      await fetchDisputeOutcome();
+    } catch (err) {
+      setNotCompletedReasonError(resolveHttpError(err, 'Failed to submit. Please try again.'));
+    } finally {
+      setNotCompletedSubmitting(false);
+    }
+  };
 
   const handleUpdateJobOutcome = async (status) => {
     const statusLabel = status === 'COMPLETED' ? 'Completed' : 'Not Completed';
@@ -347,9 +509,34 @@ const RequestDetailsPage = () => {
                   <button className="ui-button-primary flex-1" onClick={() => handleUpdateJobOutcome('COMPLETED')} disabled={isUpdatingStatus} type="button">
                     Mark as Completed
                   </button>
-                  <button className="ui-button-secondary flex-1" onClick={() => handleUpdateJobOutcome('NOT_COMPLETED')} disabled={isUpdatingStatus} type="button">
+                  {/* SCRUM-89: Opens modal with reason textarea instead of direct status update */}
+                  <button className="ui-button-secondary flex-1" onClick={() => { setShowNotCompletedModal(true); setNotCompletedReasonError(''); setNotCompletedReason(''); }} type="button">
                     Mark as Not Completed
                   </button>
+                </div>
+              ) : null}
+
+              {/* SCRUM-89: AC6 — Admin review banner shown after NOT_COMPLETED */}
+              {request.status === 'NOT_COMPLETED' ? (
+                <div className="mt-4 rounded-card border border-red-200 bg-red-50/80 px-4 py-4">
+                  <div className="flex items-start gap-3">
+                    <span className="material-icons mt-0.5 text-red-500">admin_panel_settings</span>
+                    <div>
+                      <p className="font-semibold text-red-900">This job is currently under administrative review.</p>
+                      <p className="mt-1 text-sm leading-6 text-red-800/80">
+                        Our team has been notified and will review the dispute. No further changes can be made to this job.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* SCRUM-89: AC3 — Success banner after modal submission */}
+              {notCompletedSuccess ? (
+                <div className="mt-4">
+                  <AlertPanel tone="success" icon="check_circle" title="Dispute Raised">
+                    <p>The job has been marked as not completed and a dispute has been raised. Platform administrators will review the case.</p>
+                  </AlertPanel>
                 </div>
               ) : null}
 
@@ -363,7 +550,118 @@ const RequestDetailsPage = () => {
                   </AlertPanel>
                 </div>
               ) : null}
+
+              {disputeOutcome ? (
+                <div className="mt-4 rounded-card border border-line bg-surface-muted/75 px-4 py-4 shadow-soft">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="ui-stat-label">Dispute Outcome</p>
+                    <StatusPill tone={disputeTone(disputeOutcome.status)}>
+                      {String(disputeOutcome.status || 'OPEN').replaceAll('_', ' ')}
+                    </StatusPill>
+                  </div>
+
+                  <p className="mt-3 text-sm font-semibold text-ink">Reason Submitted</p>
+                  <p className="mt-1 text-sm leading-6 text-ink-muted">
+                    {disputeOutcome.seekerReason || 'No dispute reason recorded.'}
+                  </p>
+
+                  <p className="mt-3 text-sm font-semibold text-ink">Admin Final Ruling</p>
+                  <p className="mt-1 text-sm leading-6 text-ink-muted">
+                    {disputeOutcome.status === 'RESOLVED'
+                      ? disputeOutcome.resolution || 'No final ruling note available.'
+                      : 'This dispute is under review. Final decision will appear here once resolved.'}
+                  </p>
+
+                  {disputeOutcome.status === 'RESOLVED' ? (
+                    <p className="mt-2 text-sm text-ink-muted">
+                      Resolved At: <span className="font-semibold text-ink">{formatDateTime(disputeOutcome.resolvedAt)}</span>
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
             </SectionCard>
+
+            {/* SCRUM-94: Review submission — only visible to the seeker who owns this request, after COMPLETED */}
+            {!isWorker && request.status === 'COMPLETED' ? (
+              <SectionCard className="border-green-100 bg-white shadow-card">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="ui-stat-label">Feedback</p>
+                    <h2 className="mt-2 text-xl font-bold text-ink">Leave a Review</h2>
+                    <p className="mt-2 text-sm leading-6 text-ink-muted">
+                      Share your experience with the worker to help others make informed decisions.
+                    </p>
+                  </div>
+                  <span className="material-icons text-4xl text-green-500">star_rate</span>
+                </div>
+
+                {existingReview ? (
+                  <div className="mt-5 space-y-4 rounded-card border border-line bg-surface-muted/70 px-4 py-4">
+                    <div>
+                      <p className="ui-stat-label mb-2 block">Your Rating</p>
+                      <StarRatingDisplay rating={existingReview.rating} />
+                    </div>
+
+                    <div>
+                      <p className="ui-stat-label mb-2 block">Your Comment</p>
+                      {existingReview.comment ? (
+                        <p className="rounded-card border border-line bg-white px-4 py-3 text-sm leading-6 text-ink">
+                          {existingReview.comment}
+                        </p>
+                      ) : (
+                        <p className="rounded-card border border-dashed border-line bg-white px-4 py-3 text-sm italic text-ink-muted">
+                          No written feedback provided.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmitReview} className="mt-5 space-y-4">
+                    {/* Star Rating */}
+                    <div>
+                      <label className="ui-stat-label mb-2 block">Rating</label>
+                      <StarRatingInput value={reviewRating} onChange={setReviewRating} disabled={reviewSubmitting} />
+                    </div>
+
+                    {/* Comment */}
+                    <div>
+                      <label className="ui-stat-label mb-2 block" htmlFor="review-comment">
+                        Comment <span className="font-normal text-ink-muted">(optional)</span>
+                      </label>
+                      <textarea
+                        id="review-comment"
+                        rows={4}
+                        value={reviewComment}
+                        onChange={(e) => setReviewComment(e.target.value)}
+                        placeholder="Describe your experience with the worker..."
+                        className="w-full rounded-card border border-line bg-surface-muted/70 px-4 py-3 text-sm text-ink placeholder-ink-muted focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                      />
+                    </div>
+
+                    <ErrorBanner message={reviewError} />
+
+                    <button
+                      type="submit"
+                      disabled={reviewSubmitting || Boolean(existingReview)}
+                      className="ui-button-primary w-full sm:w-auto"
+                    >
+                      {reviewSubmitting ? (
+                        <>
+                          <span className="material-icons animate-spin text-base">refresh</span>
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <span className="material-icons text-base">star</span>
+                          Submit Review
+                        </>
+                      )}
+                    </button>
+                  </form>
+                )}
+              </SectionCard>
+            ) : null}
+
 
             {!isWorker ? (
               <SectionCard className="border-line-strong bg-white shadow-card">
@@ -489,6 +787,102 @@ const RequestDetailsPage = () => {
           </aside>
         </div>
       </main>
+
+      {/* SCRUM-89: "Mark as Not Completed" confirmation modal with reason textarea */}
+      {showNotCompletedModal ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="not-completed-modal-title"
+        >
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl">
+            {/* Modal header */}
+            <div className="flex items-start justify-between gap-4 border-b border-line px-6 py-5">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-red-100 text-red-600">
+                  <span className="material-icons">report_problem</span>
+                </span>
+                <div>
+                  <h2 id="not-completed-modal-title" className="text-lg font-bold text-ink">
+                    Mark as Not Completed
+                  </h2>
+                  <p className="mt-0.5 text-sm text-ink-muted">This action will flag the job for admin review.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowNotCompletedModal(false)}
+                className="rounded-lg p-1 text-ink-muted transition hover:bg-surface-muted hover:text-ink"
+                aria-label="Close modal"
+              >
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+
+            {/* Modal body */}
+            <form onSubmit={handleNotCompletedSubmit} className="px-6 py-5 space-y-4">
+              <div className="rounded-card border border-amber-100 bg-amber-50/80 px-4 py-3">
+                <p className="text-sm leading-6 text-amber-900">
+                  <strong>Please note:</strong> Marking this job as not completed will automatically raise a dispute and notify our admin team. This action cannot be undone.
+                </p>
+              </div>
+
+              {/* AC1/AC2: Reason textarea — required */}
+              <div>
+                <label className="ui-stat-label mb-2 block" htmlFor="not-completed-reason">
+                  Reason for Incomplete Job <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="not-completed-reason"
+                  rows={4}
+                  value={notCompletedReason}
+                  onChange={(e) => { setNotCompletedReason(e.target.value); if (notCompletedReasonError) setNotCompletedReasonError(''); }}
+                  placeholder="Explain what went wrong or why the job was not completed as expected..."
+                  className={`w-full rounded-card border bg-surface-muted/70 px-4 py-3 text-sm text-ink placeholder-ink-muted focus:outline-none focus:ring-2 focus:ring-brand-200 ${notCompletedReasonError ? 'border-red-400 focus:border-red-400' : 'border-line focus:border-brand-400'}`}
+                  autoFocus
+                />
+                {/* AC2: Inline validation error */}
+                {notCompletedReasonError ? (
+                  <p className="mt-2 flex items-center gap-1.5 text-sm text-red-600">
+                    <span className="material-icons text-base">error_outline</span>
+                    {notCompletedReasonError}
+                  </p>
+                ) : null}
+              </div>
+
+              {/* Modal actions */}
+              <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowNotCompletedModal(false)}
+                  disabled={notCompletedSubmitting}
+                  className="ui-button-secondary w-full sm:w-auto"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={notCompletedSubmitting}
+                  className="w-full rounded-card bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60 sm:w-auto"
+                >
+                  {notCompletedSubmitting ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="material-icons animate-spin text-base">refresh</span>
+                      Submitting...
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="material-icons text-base">report</span>
+                      Confirm & Raise Dispute
+                    </span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };
