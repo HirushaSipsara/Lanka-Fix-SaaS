@@ -132,10 +132,10 @@ const SeekerDashboard = () => {
           )}
         />
 
-        <section className="ui-panel overflow-hidden p-5 lg:p-6">
+        <section className="overflow-hidden rounded-panel border-2 border-white/80 bg-white/95 p-5 shadow-panel backdrop-blur-xl lg:p-6">
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_320px] xl:items-start">
             <div className="space-y-4">
-              <span className="ui-badge bg-white/85 text-brand-900">Overview</span>
+              <span className="ui-badge border-brand-300 bg-brand-50 text-brand-900 shadow-sm">Overview</span>
               <div className="space-y-2">
                 <h2 className="max-w-3xl font-display text-[2rem] font-extrabold leading-[1.05] tracking-snugger text-ink md:text-[2.65rem]">
                   {activeCount > 0 ? (
@@ -158,15 +158,15 @@ const SeekerDashboard = () => {
 
               <div className="grid gap-3 sm:grid-cols-3">
                 {overviewTiles.map((tile) => (
-                  <div key={tile.label} className={`rounded-card border px-4 py-3 shadow-soft ${tile.tone}`}>
-                    <p className="ui-stat-label !text-current/70">{tile.label}</p>
+                  <div key={tile.label} className={`rounded-card border-2 px-4 py-3 shadow-md ${tile.tone}`}>
+                    <p className="ui-stat-label !text-current/80">{tile.label}</p>
                     <p className="mt-2 text-2xl font-extrabold tracking-tight">{tile.value}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="rounded-card border border-brand-100 bg-white/90 p-4 shadow-soft">
+            <div className="rounded-panel border-2 border-brand-300 bg-gradient-to-br from-white to-brand-50 p-4 shadow-card">
               <p className="ui-stat-label">Next Best Action</p>
               <h3 className="mt-2 text-lg font-bold text-ink">
                 {hasRequests ? 'Review your most recent request activity' : 'Post your first service request'}
@@ -190,39 +190,55 @@ const SeekerDashboard = () => {
           </div>
         </section>
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard
-            label="Total Requests"
-            value={stats.total}
-            icon="assignment"
-            tone="brand"
-            description="Every service request you have posted so far."
-            compact
-          />
-          <StatCard
-            label="Awaiting Quotes"
-            value={stats.open}
-            icon="hourglass_top"
-            tone="info"
-            description="Requests that are open and ready for worker responses."
-            compact
-          />
-          <StatCard
-            label="Work In Progress"
-            value={stats.active}
-            icon="construction"
-            tone="warning"
-            description="Jobs that already have a worker assigned or are underway."
-            compact
-          />
-          <StatCard
-            label="Completed Jobs"
-            value={stats.completed}
-            icon="task_alt"
-            tone="success"
-            description="Requests that have been successfully completed."
-            compact
-          />
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-card border-2 border-brand-200 bg-gradient-to-br from-white to-brand-50 p-5 shadow-card transition-all hover:-translate-y-1 hover:shadow-panel hover:border-brand-300">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="ui-stat-label">Total Requests</p>
+                <p className="ui-stat-value">{stats.total}</p>
+                <p className="mt-2 text-xs leading-5 text-ink-muted">Every service request you have posted so far.</p>
+              </div>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-brand">
+                <span className="material-icons">assignment</span>
+              </span>
+            </div>
+          </div>
+          <div className="rounded-card border-2 border-accent-200 bg-gradient-to-br from-white to-accent-50 p-5 shadow-card transition-all hover:-translate-y-1 hover:shadow-panel hover:border-accent-300">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="ui-stat-label">Awaiting Quotes</p>
+                <p className="ui-stat-value">{stats.open}</p>
+                <p className="mt-2 text-xs leading-5 text-ink-muted">Requests that are open and ready for worker responses.</p>
+              </div>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-accent text-white shadow-md">
+                <span className="material-icons">hourglass_top</span>
+              </span>
+            </div>
+          </div>
+          <div className="rounded-card border-2 border-amber-200 bg-gradient-to-br from-white to-amber-50 p-5 shadow-card transition-all hover:-translate-y-1 hover:shadow-panel hover:border-amber-300">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="ui-stat-label">Work In Progress</p>
+                <p className="ui-stat-value">{stats.active}</p>
+                <p className="mt-2 text-xs leading-5 text-ink-muted">Jobs that already have a worker assigned or are underway.</p>
+              </div>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-md">
+                <span className="material-icons">construction</span>
+              </span>
+            </div>
+          </div>
+          <div className="rounded-card border-2 border-green-200 bg-gradient-to-br from-white to-green-50 p-5 shadow-card transition-all hover:-translate-y-1 hover:shadow-panel hover:border-green-300">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="ui-stat-label">Completed Jobs</p>
+                <p className="ui-stat-value">{stats.completed}</p>
+                <p className="mt-2 text-xs leading-5 text-ink-muted">Requests that have been successfully completed.</p>
+              </div>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-green-400 to-green-600 text-white shadow-md">
+                <span className="material-icons">task_alt</span>
+              </span>
+            </div>
+          </div>
         </div>
 
         {loading ? <LoadingPanel message="Loading your dashboard..." /> : null}
@@ -248,9 +264,9 @@ const SeekerDashboard = () => {
         ) : null}
 
         {!loading && !error && hasRequests ? (
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_320px]">
-            <SectionCard className="overflow-hidden !p-0">
-              <div className="border-b border-line bg-surface-muted/70 px-4 py-4 sm:px-5">
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_320px]">
+            <div className="overflow-hidden rounded-panel border-2 border-white/90 bg-white/95 shadow-panel backdrop-blur-lg">
+              <div className="border-b-2 border-brand-200 bg-gradient-to-r from-white to-brand-50 px-4 py-4 sm:px-5">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <p className="ui-stat-label">Recent Activity</p>
@@ -262,13 +278,13 @@ const SeekerDashboard = () => {
                 </div>
               </div>
 
-              <div className="divide-y divide-line">
+              <div className="divide-y divide-line/50">
                 {recentRequests.map((request) => (
-                  <article key={request.id} className="bg-white px-4 py-4 transition hover:bg-brand-50/35 sm:px-5">
+                  <article key={request.id} className="bg-white/60 px-4 py-4 transition hover:bg-white sm:px-5">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0 space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="ui-badge">{formatCategoryLabel(request.category)}</span>
+                          <span className="ui-badge border-brand-300 bg-brand-50">{formatCategoryLabel(request.category)}</span>
                           <StatusPill tone={statusTone(request.status)}>{prettyStatus(request.status)}</StatusPill>
                         </div>
                         <div>
@@ -282,22 +298,22 @@ const SeekerDashboard = () => {
                       </div>
 
                       <div className="grid min-w-full gap-3 sm:grid-cols-2 lg:min-w-[280px] lg:max-w-[320px]">
-                        <div className="rounded-card border border-line bg-surface-muted px-4 py-3 shadow-soft">
+                        <div className="rounded-card border border-white/60 bg-white/50 px-4 py-3 shadow-soft backdrop-blur-sm">
                           <p className="ui-stat-label">Updated</p>
                           <p className="mt-2 text-sm font-semibold text-ink">{formatDate(request.updatedAt || request.createdAt)}</p>
                         </div>
-                        <div className="rounded-card border border-line bg-surface-muted px-4 py-3 shadow-soft">
+                        <div className="rounded-card border border-white/60 bg-white/50 px-4 py-3 shadow-soft backdrop-blur-sm">
                           <p className="ui-stat-label">Location</p>
                           <p className="mt-2 text-sm font-semibold text-ink">{request.locationArea || 'Not set'}</p>
                         </div>
-                        <div className="rounded-card border border-line bg-surface-muted px-4 py-3 shadow-soft sm:col-span-2 lg:col-span-1">
+                        <div className="rounded-card border border-white/60 bg-white/50 px-4 py-3 shadow-soft backdrop-blur-sm sm:col-span-2 lg:col-span-1">
                           <p className="ui-stat-label">Urgency</p>
                           <p className="mt-2 text-sm font-semibold text-ink">{prettyStatus(request.urgency || 'MEDIUM')}</p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="mt-4 flex flex-col gap-3 border-t border-line pt-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="mt-4 flex flex-col gap-3 border-t border-white/40 pt-3 sm:flex-row sm:items-center sm:justify-between">
                       <p className="text-sm font-medium leading-6 text-ink-muted">
                         Open the request to view worker responses, update details, or manage the job.
                       </p>
@@ -309,37 +325,37 @@ const SeekerDashboard = () => {
                   </article>
                 ))}
               </div>
-            </SectionCard>
+            </div>
 
             <aside className="space-y-5">
-              <SectionCard className="border-brand-100 bg-white shadow-card">
+              <div className="rounded-panel border-2 border-brand-200 bg-gradient-to-br from-white to-brand-50 p-5 shadow-card">
                 <p className="ui-stat-label">Need Attention</p>
                 <h2 className="mt-2 text-xl font-bold text-ink">Priority Snapshot</h2>
                 <div className="mt-4 space-y-3">
-                  <div className="rounded-card border border-blue-100 bg-blue-50/70 px-4 py-3.5">
+                  <div className="rounded-card border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 px-4 py-3.5">
                     <p className="text-sm font-semibold text-blue-900">Open Requests</p>
                     <p className="mt-2 text-2xl font-extrabold text-blue-900">{stats.open}</p>
-                    <p className="mt-2 text-sm leading-6 text-blue-900/80">Waiting for worker interest and fresh quotations.</p>
+                    <p className="mt-2 text-sm leading-6 text-blue-800">Waiting for worker interest and fresh quotations.</p>
                   </div>
-                  <div className="rounded-card border border-amber-100 bg-amber-50/80 px-4 py-3.5">
+                  <div className="rounded-card border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100 px-4 py-3.5">
                     <p className="text-sm font-semibold text-amber-900">Jobs In Progress</p>
                     <p className="mt-2 text-2xl font-extrabold text-amber-900">{stats.active}</p>
-                    <p className="mt-2 text-sm leading-6 text-amber-900/80">Keep an eye on active work and confirm outcomes when finished.</p>
+                    <p className="mt-2 text-sm leading-6 text-amber-800">Keep an eye on active work and confirm outcomes when finished.</p>
                   </div>
-                  <div className="rounded-card border border-red-100 bg-red-50/80 px-4 py-3.5">
+                  <div className="rounded-card border-2 border-red-200 bg-gradient-to-br from-red-50 to-red-100 px-4 py-3.5">
                     <p className="text-sm font-semibold text-red-900">Needs Follow-up</p>
                     <p className="mt-2 text-2xl font-extrabold text-red-900">{stats.attention}</p>
-                    <p className="mt-2 text-sm leading-6 text-red-900/80">Cancelled or incomplete requests that may need a new plan.</p>
+                    <p className="mt-2 text-sm leading-6 text-red-800">Cancelled or incomplete requests that may need a new plan.</p>
                   </div>
                 </div>
-              </SectionCard>
+              </div>
 
-              <SectionCard className="border-brand-100 bg-white shadow-card">
+              <div className="rounded-panel border-2 border-brand-200 bg-gradient-to-br from-white to-brand-50 p-5 shadow-card">
                 <p className="ui-stat-label">Quick Actions</p>
                 <h2 className="mt-2 text-xl font-bold text-ink">Move Faster</h2>
                 <div className="mt-4 space-y-3">
-                  <Link to="/create-request" className="flex items-start gap-3 rounded-card border border-line bg-surface-muted px-4 py-3.5 transition hover:border-brand-200 hover:bg-brand-50/60">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand-gradient text-white">
+                  <Link to="/create-request" className="flex items-start gap-3 rounded-card border-2 border-brand-200 bg-white px-4 py-3.5 transition hover:border-brand-400 hover:bg-brand-50 hover:shadow-md">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand-gradient text-white shadow-brand">
                       <span className="material-icons">playlist_add</span>
                     </span>
                     <span className="min-w-0">
@@ -348,8 +364,8 @@ const SeekerDashboard = () => {
                     </span>
                   </Link>
 
-                  <Link to="/browse-workers" className="flex items-start gap-3 rounded-card border border-line bg-surface-muted px-4 py-3.5 transition hover:border-brand-200 hover:bg-brand-50/60">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-brand-900">
+                  <Link to="/browse-workers" className="flex items-start gap-3 rounded-card border-2 border-brand-200 bg-white px-4 py-3.5 transition hover:border-brand-400 hover:bg-brand-50 hover:shadow-md">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-200 to-brand-400 text-white shadow-sm">
                       <span className="material-icons">groups</span>
                     </span>
                     <span className="min-w-0">
@@ -358,8 +374,8 @@ const SeekerDashboard = () => {
                     </span>
                   </Link>
 
-                  <Link to="/my-reviews" className="flex items-start gap-3 rounded-card border border-line bg-surface-muted px-4 py-3.5 transition hover:border-brand-200 hover:bg-brand-50/60">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                  <Link to="/my-reviews" className="flex items-start gap-3 rounded-card border-2 border-brand-200 bg-white px-4 py-3.5 transition hover:border-brand-400 hover:bg-brand-50 hover:shadow-md">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-200 to-amber-400 text-amber-900 shadow-sm">
                       <span className="material-icons">rate_review</span>
                     </span>
                     <span className="min-w-0">
@@ -368,7 +384,7 @@ const SeekerDashboard = () => {
                     </span>
                   </Link>
                 </div>
-              </SectionCard>
+              </div>
             </aside>
           </div>
         ) : null}

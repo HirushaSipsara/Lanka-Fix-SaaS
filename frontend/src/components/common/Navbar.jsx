@@ -54,7 +54,7 @@ const Navbar = ({ variant = 'landing' }) => {
   const navLinkBase = cn(
     'relative rounded-full px-3 py-2 text-sm font-medium transition',
     isPortal
-      ? 'text-white/80 hover:bg-white/10 hover:text-white'
+      ? 'text-white hover:bg-white/20 hover:text-white'
       : showLightDesktop
         ? 'text-white/85 hover:bg-white/10 hover:text-white'
         : 'text-ink-muted hover:bg-brand-50 hover:text-brand-800'
@@ -63,7 +63,7 @@ const Navbar = ({ variant = 'landing' }) => {
   const navLinkClass = ({ isActive }) =>
     cn(
       navLinkBase,
-      isPortal && isActive && 'bg-white/18 text-white ring-1 ring-white/30 shadow-soft font-semibold',
+      isPortal && isActive && 'bg-white/25 text-white ring-1 ring-white/40 shadow-soft font-semibold',
       !isPortal && isActive && 'bg-brand-50 text-brand-800 font-semibold',
     );
 
@@ -80,10 +80,13 @@ const Navbar = ({ variant = 'landing' }) => {
         id="main-navbar"
         className={cn(
           'left-0 right-0 z-50 transition-all duration-300',
-          isPortal ? 'sticky top-0 border-b border-white/10 bg-brand-gradient-strong shadow-brand' : 'fixed top-0',
+          isPortal ? 'sticky top-0 border-b border-brand-800/30 shadow-lg' : 'fixed top-0',
           !isPortal && scrolled && 'border-b border-white/70 bg-white/90 shadow-soft backdrop-blur-xl',
           !isPortal && !scrolled && 'bg-transparent'
         )}
+        style={isPortal ? {
+          background: 'linear-gradient(135deg, #075985 0%, #0284c7 50%, #0891b2 100%)',
+        } : undefined}
       >
         <div className="container flex items-center justify-between py-3">
           <Link to="/" className="flex items-center gap-3" onClick={closeMobile}>
@@ -142,14 +145,14 @@ const Navbar = ({ variant = 'landing' }) => {
                 <div className="ml-3 flex items-center gap-3">
                   <button
                     type="button"
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition hover:bg-white/20"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white/30 bg-white/15 text-white transition hover:bg-white/25 hover:border-white/50 shadow-soft"
                   >
                     <span role="img" aria-label="Notifications">🔔</span>
                   </button>
                   <Link
                     to="/account/profile"
                     title={displayName}
-                    className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white/70 bg-highlight-gradient text-sm font-bold text-brand-900 shadow-soft"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-white text-sm font-bold text-brand-800 shadow-md transition hover:scale-105"
                   >
                     {avatarText}
                   </Link>

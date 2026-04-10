@@ -208,11 +208,11 @@ const WorkerDashboard = () => {
           )}
         />
 
-        <section className="ui-panel overflow-hidden p-6 lg:p-7">
+        <section className="overflow-hidden rounded-panel border-2 border-white/90 bg-white/95 p-6 shadow-panel backdrop-blur-lg lg:p-7">
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_340px] xl:items-start">
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-3">
-                <span className="ui-badge bg-white/85 text-brand-900">Worker Overview</span>
+                <span className="ui-badge border-brand-300 bg-brand-50 text-brand-900 shadow-sm">Worker Overview</span>
                 {profile ? (
                   <StatusPill tone={verificationTone(verificationStatus)}>
                     Verification: {prettyLabel(verificationStatus)}
@@ -241,15 +241,15 @@ const WorkerDashboard = () => {
 
               <div className="grid gap-3 sm:grid-cols-3">
                 {overviewTiles.map((tile) => (
-                  <div key={tile.label} className={`rounded-card border px-4 py-3 shadow-soft ${tile.tone}`}>
-                    <p className="ui-stat-label !text-current/70">{tile.label}</p>
+                  <div key={tile.label} className={`rounded-card border-2 px-4 py-3 shadow-md ${tile.tone}`}>
+                    <p className="ui-stat-label !text-current/80">{tile.label}</p>
                     <p className="mt-2 text-2xl font-extrabold tracking-tight">{tile.value}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="rounded-panel border border-brand-100 bg-white/90 p-5 shadow-card">
+            <div className="rounded-panel border-2 border-brand-300 bg-gradient-to-br from-white to-brand-50 p-5 shadow-card">
               <p className="ui-stat-label">Focus Right Now</p>
               <h3 className="mt-3 text-xl font-bold text-ink">
                 {needsProfile
@@ -321,34 +321,56 @@ const WorkerDashboard = () => {
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard
-            label="Total Quotes"
-            value={stats.totalQuotes}
-            icon="request_quote"
-            tone="brand"
-            description="All quotations you have submitted so far."
-          />
-          <StatCard
-            label="Pending Quotes"
-            value={stats.pendingQuotes}
-            icon="hourglass_top"
-            tone="warning"
-            description="Still waiting for seeker decisions."
-          />
-          <StatCard
-            label="Accepted Quotes"
-            value={stats.acceptedQuotes}
-            icon="check_circle"
-            tone="success"
-            description="Quotations that successfully converted into work."
-          />
-          <StatCard
-            label="Completed Jobs"
-            value={stats.completedJobs}
-            icon="workspace_premium"
-            tone="info"
-            description={averageRating > 0 ? `Current average rating: ${averageRating.toFixed(1)} / 5` : 'Build momentum with each completed job.'}
-          />
+          <div className="rounded-card border-2 border-brand-200 bg-gradient-to-br from-white to-brand-50 p-5 shadow-card transition-all hover:-translate-y-1 hover:shadow-panel hover:border-brand-300">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="ui-stat-label">Total Quotes</p>
+                <p className="ui-stat-value">{stats.totalQuotes}</p>
+                <p className="mt-2 text-xs leading-5 text-ink-muted">All quotations you have submitted so far.</p>
+              </div>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-brand">
+                <span className="material-icons">request_quote</span>
+              </span>
+            </div>
+          </div>
+          <div className="rounded-card border-2 border-amber-200 bg-gradient-to-br from-white to-amber-50 p-5 shadow-card transition-all hover:-translate-y-1 hover:shadow-panel hover:border-amber-300">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="ui-stat-label">Pending Quotes</p>
+                <p className="ui-stat-value">{stats.pendingQuotes}</p>
+                <p className="mt-2 text-xs leading-5 text-ink-muted">Still waiting for seeker decisions.</p>
+              </div>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-md">
+                <span className="material-icons">hourglass_top</span>
+              </span>
+            </div>
+          </div>
+          <div className="rounded-card border-2 border-green-200 bg-gradient-to-br from-white to-green-50 p-5 shadow-card transition-all hover:-translate-y-1 hover:shadow-panel hover:border-green-300">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="ui-stat-label">Accepted Quotes</p>
+                <p className="ui-stat-value">{stats.acceptedQuotes}</p>
+                <p className="mt-2 text-xs leading-5 text-ink-muted">Quotations that successfully converted into work.</p>
+              </div>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-green-400 to-green-600 text-white shadow-md">
+                <span className="material-icons">check_circle</span>
+              </span>
+            </div>
+          </div>
+          <div className="rounded-card border-2 border-accent-200 bg-gradient-to-br from-white to-accent-50 p-5 shadow-card transition-all hover:-translate-y-1 hover:shadow-panel hover:border-accent-300">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="ui-stat-label">Completed Jobs</p>
+                <p className="ui-stat-value">{stats.completedJobs}</p>
+                <p className="mt-2 text-xs leading-5 text-ink-muted">
+                  {averageRating > 0 ? `Current average rating: ${averageRating.toFixed(1)} / 5` : 'Build momentum with each completed job.'}
+                </p>
+              </div>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-accent text-white shadow-md">
+                <span className="material-icons">workspace_premium</span>
+              </span>
+            </div>
+          </div>
         </div>
 
         {loading ? <LoadingPanel message="Loading your dashboard..." /> : null}
@@ -376,8 +398,8 @@ const WorkerDashboard = () => {
         {!loading && !error ? (
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_360px]">
             <div className="space-y-5">
-              <SectionCard className="overflow-hidden !p-0">
-                <div className="border-b border-line bg-surface-muted/70 px-6 py-5">
+              <div className="overflow-hidden rounded-panel border-2 border-white/90 bg-white/95 shadow-panel backdrop-blur-lg">
+                <div className="border-b-2 border-brand-200 bg-gradient-to-r from-white to-brand-50 px-6 py-5">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                       <p className="ui-stat-label">Current Workload</p>
@@ -400,13 +422,13 @@ const WorkerDashboard = () => {
                     />
                   </div>
                 ) : (
-                  <div className="divide-y divide-line">
+                  <div className="divide-y divide-line/50">
                     {activeJobs.map((job) => (
-                      <article key={job.requestId} className="bg-white px-6 py-6 transition hover:bg-brand-50/35">
+                      <article key={job.requestId} className="bg-white/60 px-6 py-6 transition hover:bg-white">
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                           <div className="space-y-3">
                             <div className="flex flex-wrap items-center gap-2">
-                              {job.category ? <span className="ui-badge">{formatCategoryLabel(job.category)}</span> : null}
+                              {job.category ? <span className="ui-badge border-brand-200/60 bg-white/80 backdrop-blur-sm">{formatCategoryLabel(job.category)}</span> : null}
                               <StatusPill tone={jobStatusTone(job.status)}>{prettyLabel(job.status)}</StatusPill>
                             </div>
                             <div>
@@ -422,15 +444,15 @@ const WorkerDashboard = () => {
                           </div>
 
                           <div className="grid min-w-full gap-3 sm:grid-cols-3 lg:min-w-[320px] lg:max-w-[370px]">
-                            <div className="rounded-card border border-line bg-surface-muted px-4 py-4 shadow-soft">
+                            <div className="rounded-card border border-white/60 bg-white/50 px-4 py-4 shadow-soft backdrop-blur-sm">
                               <p className="ui-stat-label">Seeker</p>
                               <p className="mt-2 text-sm font-semibold text-ink">{job.seekerName || 'Unknown'}</p>
                             </div>
-                            <div className="rounded-card border border-line bg-surface-muted px-4 py-4 shadow-soft">
+                            <div className="rounded-card border border-white/60 bg-white/50 px-4 py-4 shadow-soft backdrop-blur-sm">
                               <p className="ui-stat-label">Location</p>
                               <p className="mt-2 text-sm font-semibold text-ink">{job.locationArea || 'Not set'}</p>
                             </div>
-                            <div className="rounded-card border border-line bg-surface-muted px-4 py-4 shadow-soft">
+                            <div className="rounded-card border border-white/60 bg-white/50 px-4 py-4 shadow-soft backdrop-blur-sm">
                               <p className="ui-stat-label">Budget</p>
                               <p className="mt-2 text-sm font-semibold text-ink">
                                 {job.budget !== null && job.budget !== undefined ? `Rs. ${Number(job.budget).toLocaleString()}` : 'Negotiable'}
@@ -439,7 +461,7 @@ const WorkerDashboard = () => {
                           </div>
                         </div>
 
-                        <div className="mt-5 flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="mt-5 flex flex-col gap-3 border-t border-white/40 pt-4 sm:flex-row sm:items-center sm:justify-between">
                           <p className="text-sm font-medium text-ink-muted">
                             Use the full request view to manage job updates and submit work outcomes clearly.
                           </p>
@@ -452,10 +474,10 @@ const WorkerDashboard = () => {
                     ))}
                   </div>
                 )}
-              </SectionCard>
+              </div>
 
-              <SectionCard className="overflow-hidden !p-0">
-                <div className="border-b border-line bg-surface-muted/70 px-6 py-5">
+              <div className="overflow-hidden rounded-panel border-2 border-white/90 bg-white/95 shadow-panel backdrop-blur-lg">
+                <div className="border-b-2 border-brand-200 bg-gradient-to-r from-white to-brand-50 px-6 py-5">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                       <p className="ui-stat-label">Quote Pipeline</p>
@@ -479,9 +501,9 @@ const WorkerDashboard = () => {
                     />
                   </div>
                 ) : (
-                  <div className="divide-y divide-line">
+                  <div className="divide-y divide-line/50">
                     {recentQuotes.map((quote) => (
-                      <article key={quote.id} className="bg-white px-6 py-5 transition hover:bg-brand-50/35">
+                      <article key={quote.id} className="bg-white/60 px-6 py-5 transition hover:bg-white">
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                           <div className="space-y-3">
                             <div className="flex flex-wrap items-center gap-2">
@@ -501,17 +523,17 @@ const WorkerDashboard = () => {
                           </div>
 
                           <div className="grid min-w-full gap-3 sm:grid-cols-3 lg:min-w-[320px] lg:max-w-[360px]">
-                            <div className="rounded-card border border-line bg-surface-muted px-4 py-4 shadow-soft">
+                            <div className="rounded-card border-2 border-brand-200 bg-white px-4 py-4 shadow-soft">
                               <p className="ui-stat-label">Quoted Price</p>
                               <p className="mt-2 text-sm font-semibold text-ink">Rs. {Number(quote.price || 0).toLocaleString()}</p>
                             </div>
-                            <div className="rounded-card border border-line bg-surface-muted px-4 py-4 shadow-soft">
+                            <div className="rounded-card border-2 border-brand-200 bg-white px-4 py-4 shadow-soft">
                               <p className="ui-stat-label">ETA</p>
                               <p className="mt-2 text-sm font-semibold text-ink">
                                 {quote.estimatedDays} {Number(quote.estimatedDays) === 1 ? 'day' : 'days'}
                               </p>
                             </div>
-                            <div className="rounded-card border border-line bg-surface-muted px-4 py-4 shadow-soft">
+                            <div className="rounded-card border-2 border-brand-200 bg-white px-4 py-4 shadow-soft">
                               <p className="ui-stat-label">Request</p>
                               <p className="mt-2 text-sm font-semibold text-ink">#{quote.requestId}</p>
                             </div>
@@ -521,11 +543,11 @@ const WorkerDashboard = () => {
                     ))}
                   </div>
                 )}
-              </SectionCard>
+              </div>
             </div>
 
             <aside className="space-y-5">
-              <SectionCard className="border-brand-100 bg-white shadow-card">
+              <div className="rounded-panel border-2 border-brand-200 bg-gradient-to-br from-white to-brand-50 p-5 shadow-card">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="ui-stat-label">Profile Health</p>
@@ -539,21 +561,21 @@ const WorkerDashboard = () => {
                 </div>
 
                 <div className="mt-5 space-y-3">
-                  <div className="rounded-card border border-line bg-surface-muted px-4 py-4">
+                  <div className="rounded-card border border-white/60 bg-white/50 px-4 py-4 backdrop-blur-sm">
                     <p className="ui-stat-label">Verification</p>
                     <div className="mt-2">
                       <StatusPill tone={verificationTone(verificationStatus)}>{prettyLabel(verificationStatus)}</StatusPill>
                     </div>
                   </div>
-                  <div className="rounded-card border border-line bg-surface-muted px-4 py-4">
+                  <div className="rounded-card border border-white/60 bg-white/50 px-4 py-4 backdrop-blur-sm">
                     <p className="ui-stat-label">Availability</p>
                     <p className="mt-2 text-sm font-semibold text-ink">{profile?.availability || 'Not set yet'}</p>
                   </div>
-                  <div className="rounded-card border border-line bg-surface-muted px-4 py-4">
+                  <div className="rounded-card border border-white/60 bg-white/50 px-4 py-4 backdrop-blur-sm">
                     <p className="ui-stat-label">Base District</p>
                     <p className="mt-2 text-sm font-semibold text-ink">{profile?.district || 'Not set yet'}</p>
                   </div>
-                  <div className="rounded-card border border-line bg-surface-muted px-4 py-4">
+                  <div className="rounded-card border border-white/60 bg-white/50 px-4 py-4 backdrop-blur-sm">
                     <p className="ui-stat-label">Bio Snapshot</p>
                     <p className="mt-2 text-sm leading-7 text-ink-muted">{excerpt(profile?.bio, 150)}</p>
                   </div>
@@ -564,16 +586,16 @@ const WorkerDashboard = () => {
                     <p className="ui-stat-label">Top Skills</p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {skills.map((skill) => (
-                        <span key={skill} className="ui-badge">{skill}</span>
+                        <span key={skill} className="ui-badge border-brand-200/60 bg-white/80 backdrop-blur-sm">{skill}</span>
                       ))}
                     </div>
                   </div>
                 ) : null}
-              </SectionCard>
+              </div>
 
               {/* SCRUM-92 — Disputes section */}
-              <SectionCard className="overflow-hidden !p-0">
-                <div className="border-b border-line bg-surface-muted/70 px-6 py-5">
+              <div className="overflow-hidden rounded-panel border-2 border-white/90 bg-white/95 shadow-card backdrop-blur-lg">
+                <div className="border-b-2 border-brand-200 bg-gradient-to-r from-white to-brand-50 px-6 py-5">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <p className="ui-stat-label">Dispute History</p>
@@ -597,12 +619,12 @@ const WorkerDashboard = () => {
                     />
                   </div>
                 ) : (
-                  <div className="divide-y divide-line">
+                  <div className="divide-y divide-line/50">
                     {disputes.map((dispute) => {
                       const isOpen = String(dispute.status).toUpperCase() === 'OPEN';
                       const isExpanded = expandedDisputeId === dispute.id;
                       return (
-                        <article key={dispute.id} className="bg-white px-6 py-5 transition hover:bg-brand-50/30">
+                        <article key={dispute.id} className="bg-white/60 px-6 py-5 transition hover:bg-white">
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div className="space-y-1">
                               <h3 className="text-base font-bold text-ink">
@@ -630,7 +652,7 @@ const WorkerDashboard = () => {
                           </button>
 
                           {isExpanded ? (
-                            <div className="mt-4 space-y-3 rounded-card border border-line bg-surface-muted/70 px-4 py-4">
+                            <div className="mt-4 space-y-3 rounded-card border-2 border-brand-200 bg-white px-4 py-4">
                               <div>
                                 <p className="ui-stat-label mb-1">Seeker's Reason</p>
                                 <p className="text-sm leading-6 text-ink">
@@ -638,7 +660,7 @@ const WorkerDashboard = () => {
                                 </p>
                               </div>
                               {!isOpen && dispute.resolution ? (
-                                <div className="border-t border-line pt-3">
+                                <div className="border-t-2 border-line pt-3">
                                   <p className="ui-stat-label mb-1">Admin Resolution</p>
                                   <p className="text-sm leading-6 text-ink">{dispute.resolution}</p>
                                   {dispute.resolvedAt ? (
@@ -662,14 +684,14 @@ const WorkerDashboard = () => {
                     })}
                   </div>
                 )}
-              </SectionCard>
+              </div>
 
-              <SectionCard className="border-brand-100 bg-white shadow-card">
+              <div className="rounded-panel border border-white/60 bg-gradient-to-br from-white/70 to-brand-50/50 p-5 shadow-card backdrop-blur-xl">
                 <p className="ui-stat-label">Quick Actions</p>
                 <h2 className="mt-2 text-2xl font-bold text-ink">Stay Visible</h2>
                 <div className="mt-5 space-y-3">
-                  <Link to="/browse-requests" className="flex items-start gap-4 rounded-card border border-line bg-surface-muted px-4 py-4 transition hover:border-brand-200 hover:bg-brand-50/60">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-gradient text-white">
+                  <Link to="/browse-requests" className="flex items-start gap-4 rounded-card border border-white/60 bg-white/50 px-4 py-4 backdrop-blur-sm transition hover:border-brand-300 hover:bg-white/70">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-gradient text-white shadow-brand">
                       <span className="material-icons">travel_explore</span>
                     </span>
                     <span className="min-w-0">
@@ -678,8 +700,8 @@ const WorkerDashboard = () => {
                     </span>
                   </Link>
 
-                  <Link to="/my-quotations" className="flex items-start gap-4 rounded-card border border-line bg-surface-muted px-4 py-4 transition hover:border-brand-200 hover:bg-brand-50/60">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-brand-900">
+                  <Link to="/my-quotations" className="flex items-start gap-4 rounded-card border border-white/60 bg-white/50 px-4 py-4 backdrop-blur-sm transition hover:border-brand-300 hover:bg-white/70">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-200 to-brand-300 text-brand-900 shadow-sm">
                       <span className="material-icons">request_quote</span>
                     </span>
                     <span className="min-w-0">
@@ -688,8 +710,8 @@ const WorkerDashboard = () => {
                     </span>
                   </Link>
 
-                  <Link to="/my-jobs" className="flex items-start gap-4 rounded-card border border-line bg-surface-muted px-4 py-4 transition hover:border-brand-200 hover:bg-brand-50/60">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-brand-900">
+                  <Link to="/my-jobs" className="flex items-start gap-4 rounded-card border border-white/60 bg-white/50 px-4 py-4 backdrop-blur-sm transition hover:border-brand-300 hover:bg-white/70">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-200 to-brand-300 text-brand-900 shadow-sm">
                       <span className="material-icons">handyman</span>
                     </span>
                     <span className="min-w-0">
@@ -698,7 +720,7 @@ const WorkerDashboard = () => {
                     </span>
                   </Link>
                 </div>
-              </SectionCard>
+              </div>
             </aside>
           </div>
         ) : null}
