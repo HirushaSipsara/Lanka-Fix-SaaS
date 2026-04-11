@@ -125,22 +125,13 @@ const RegisterPage = () => {
             </div>
           </div>
 
-          <div className="space-y-3">
-            <button
-              type="submit"
-              className="flex w-full items-center justify-center rounded-2xl border border-slate-900 bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={loading}
-            >
-              {loading ? 'Creating account...' : 'Sign up'}
-            </button>
-            <Link
-              to="/login"
-              state={location.state}
-              className="flex w-full items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
-            >
-              Sign in instead
-            </Link>
-          </div>
+          <button
+            type="submit"
+            className="flex w-full items-center justify-center rounded-2xl border border-brand-700 bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-brand transition hover:-translate-y-0.5 hover:shadow-panel disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={loading}
+          >
+            {loading ? 'Creating account...' : 'Sign up'}
+          </button>
         </form>
       </div>
     </AuthShell>

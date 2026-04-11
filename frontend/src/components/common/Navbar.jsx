@@ -52,7 +52,7 @@ const Navbar = ({ variant = 'landing' }) => {
   const closeMobile = () => setMobileOpen(false);
 
   const navLinkBase = cn(
-    'relative rounded-full px-3 py-2 text-sm font-medium transition',
+    'relative rounded-full px-3 py-1.5 text-sm font-medium transition',
     isPortal
       ? 'text-white/80 hover:bg-white/10 hover:text-white'
       : showLightDesktop
@@ -85,12 +85,10 @@ const Navbar = ({ variant = 'landing' }) => {
           !isPortal && !scrolled && 'bg-transparent'
         )}
       >
-        <div className="container flex items-center justify-between py-3">
+        <div className="container flex items-center justify-between py-2">
           <Link to="/" className="flex items-center gap-3" onClick={closeMobile}>
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-gradient text-xl shadow-brand">
-              <span role="img" aria-label="LankaFix logo">
-                🔧
-              </span>
+            <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-brand">
+              <img src="/LankaFIX%20Logo.png" alt="LankaFIX logo" className="h-10 w-10 object-contain" />
             </span>
             <span
               className={cn(
@@ -120,7 +118,7 @@ const Navbar = ({ variant = 'landing' }) => {
                 <Link
                   to="/register"
                   className={cn(
-                    'rounded-2xl border px-5 py-2.5 text-sm font-semibold transition',
+                    'rounded-2xl border px-5 py-2 text-sm font-semibold transition',
                     showLightDesktop
                       ? 'border-slate-900 bg-slate-900 text-white hover:bg-slate-800'
                       : 'border-slate-900 bg-slate-900 text-white hover:bg-slate-800'
@@ -131,7 +129,7 @@ const Navbar = ({ variant = 'landing' }) => {
                 <Link
                   to="/login"
                   className={cn(
-                    'rounded-2xl border px-5 py-2.5 text-sm font-semibold transition',
+                    'rounded-2xl border px-5 py-2 text-sm font-semibold transition',
                     showLightDesktop
                       ? 'border-white/45 bg-white/14 text-white hover:bg-white/24'
                       : 'border-slate-300 bg-white text-slate-900 hover:bg-slate-50'
@@ -142,7 +140,7 @@ const Navbar = ({ variant = 'landing' }) => {
                 <Link
                   to="/create-profile"
                   className={cn(
-                    'ui-button px-5 py-2.5 text-sm',
+                    'ui-button px-5 py-2 text-sm',
                     showLightDesktop
                       ? 'border-white/40 bg-white/10 text-white hover:bg-white hover:text-brand-800'
                       : 'border-brand-200 bg-white text-brand-800 hover:bg-brand-50'

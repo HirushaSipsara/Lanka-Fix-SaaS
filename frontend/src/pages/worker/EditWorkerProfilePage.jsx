@@ -196,13 +196,15 @@ const EditWorkerProfilePage = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           <section className="ui-panel p-6">
             <div className="flex flex-col gap-5 md:flex-row md:items-center">
-              <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-brand-gradient text-4xl font-bold text-white shadow-brand">
-                {formData.profilePictureUrl ? (
-                  <img src={formData.profilePictureUrl} alt="Profile" className="h-full w-full object-cover" />
-                ) : (
-                  <span className="material-icons text-5xl">person</span>
-                )}
-                <label htmlFor="photo-upload" className="absolute bottom-1 right-1 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-brand-800 shadow-soft">
+              <div className="relative h-28 w-28">
+                <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-4 border-white bg-brand-gradient text-4xl font-bold text-white shadow-brand">
+                  {formData.profilePictureUrl ? (
+                    <img src={formData.profilePictureUrl} alt="Profile" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="material-icons text-5xl">person</span>
+                  )}
+                </div>
+                <label htmlFor="photo-upload" className="absolute bottom-0 right-0 z-20 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-brand-800 shadow-soft ring-2 ring-white">
                   <span className="material-icons text-lg">add_a_photo</span>
                 </label>
                 <input id="photo-upload" type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />

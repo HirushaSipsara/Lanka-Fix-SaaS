@@ -16,9 +16,11 @@ const AuthShell = ({ title, subtitle, children, footer, className }) => (
     <div className="relative z-10 container flex min-h-[calc(100vh-5rem)] items-center justify-center py-8">
       <div className={cn('w-full max-w-lg rounded-[32px] bg-white p-6 shadow-[0_30px_90px_rgba(15,23,42,0.45)] sm:p-8', className)}>
         <div className="mb-8 text-center">
-          <span className="inline-flex items-center rounded-full bg-brand-50 px-4 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-brand-800">
-            Skill Exchange
-          </span>
+          <img
+            src="/LankaFIX%20Logo.png"
+            alt="LankaFIX logo"
+            className="mx-auto h-16 w-auto rounded-xl object-contain"
+          />
           <h1 className="mt-4 font-display text-3xl font-extrabold tracking-snugger text-ink">{title}</h1>
           {subtitle ? <p className="mt-3 text-sm leading-7 text-ink-muted">{subtitle}</p> : null}
         </div>
