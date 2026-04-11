@@ -11,6 +11,7 @@ import lk.wedalk.users.model.Role;
 import lk.wedalk.common.enums.UrgencyLevel;
 import lk.wedalk.common.exceptions.BadRequestException;
 import lk.wedalk.common.exceptions.NotFoundException;
+import lk.wedalk.profiles.repository.WorkerProfileRepository;
 import lk.wedalk.requests.dto.RequestCreateRequest;
 import lk.wedalk.requests.dto.RequestResponse;
 import lk.wedalk.requests.dto.RequestStatusUpdateRequest;
@@ -39,6 +40,7 @@ public class ServiceRequestService {
 
   private final ServiceRequestRepository serviceRequestRepository;
   private final UserRepository userRepository;
+  private final WorkerProfileRepository workerProfileRepository;
 
   @Transactional
   public RequestResponse createRequest(Long seekerId, RequestCreateRequest request) {
@@ -207,6 +209,11 @@ public class ServiceRequestService {
   }
 
   private RequestResponse mapToResponse(ServiceRequest request) {
+    Long assignedWorkerId = request.getAssignedWorker() != null ? request.getAssignedWorker().getId() : null;
+    Long assignedWorkerProfileId = assignedWorkerId == null
+        ? null
+        : workerProfileRepository.findByUserId(assignedWorkerId).map(profile -> profile.getId()).orElse(null);
+
     return RequestResponse.builder()
         .id(request.getId())
         .title(request.getTitle())
@@ -221,6 +228,9 @@ public class ServiceRequestService {
         .seekerId(request.getSeeker().getId())
         .seekerName(request.getSeeker().getFullName())
         .seekerPhone(request.getSeeker().getPhoneNumber())
+        .assignedWorkerId(assignedWorkerId)
+        .assignedWorkerName(request.getAssignedWorker() != null ? request.getAssignedWorker().getFullName() : null)
+        .assignedWorkerProfileId(assignedWorkerProfileId)
         .build();
   }
 
