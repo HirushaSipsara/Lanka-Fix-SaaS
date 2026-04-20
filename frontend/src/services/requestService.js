@@ -5,7 +5,7 @@
  */
 
 import apiClient from './apiClient';
-import { getUser } from '../utils/storage';
+
 
 /**
  * Create a new service request
@@ -99,21 +99,23 @@ export const updateRequest = async (id, updateData) => {
 };
 
 /**
- * Update request job outcome status (ASSIGNED -> COMPLETED / NOT_COMPLETED)
+ * Seeker: confirm job completion (WORKER_COMPLETED → COMPLETED)
  * @param {number} id - Request ID
- * @param {string} status - COMPLETED or NOT_COMPLETED
+ * @param {string} status - Must be COMPLETED
  * @returns {Promise<Object>} Updated request
  */
 export const updateRequestStatus = async (id, status) => {
-    const currentUser = getUser();
-    if (!currentUser?.id) {
-        throw new Error('User must be logged in to update request status');
-    }
+    const response = await apiClient.put(`/requests/${id}/status`, { status });
+    return response.data.data;
+};
 
-    const response = await apiClient.put(
-        `/requests/${id}/status?seekerId=${currentUser.id}`,
-        { status }
-    );
+/**
+ * Worker: mark an assigned job as done (ASSIGNED → WORKER_COMPLETED)
+ * @param {number} requestId - Request ID
+ * @returns {Promise<Object>} Updated request
+ */
+export const workerMarkJobDone = async (requestId) => {
+    const response = await apiClient.patch(`/requests/${requestId}/worker-complete`);
     return response.data.data;
 };
 
