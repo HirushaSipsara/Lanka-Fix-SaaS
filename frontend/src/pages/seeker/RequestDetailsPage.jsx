@@ -307,8 +307,7 @@ const RequestDetailsPage = () => {
   };
 
   const handleUpdateJobOutcome = async (status) => {
-    const statusLabel = status === 'COMPLETED' ? 'Completed' : 'Not Completed';
-    const confirmed = window.confirm(`Are you sure you want to mark this job as ${statusLabel}?`);
+    const confirmed = window.confirm('Confirm that the job was completed to your satisfaction?');
     if (!confirmed) return;
 
     setIsUpdatingStatus(true);
@@ -362,7 +361,8 @@ const RequestDetailsPage = () => {
   const tone = statusTone(request.status);
   const accentClass = metricAccent(tone);
   const canManageRequest = request.status === 'OPEN';
-  const canRaiseDispute = request.status === 'IN_PROGRESS';
+  const workerHasMarkedDone = request.status === 'WORKER_COMPLETED';
+  const canRaiseDispute = request.status === 'ASSIGNED' || request.status === 'WORKER_COMPLETED';
   const disputeModalTitle = disputeMode === 'general' ? 'Raise Dispute' : 'Mark as Not Completed';
   const disputeModalMessage = disputeMode === 'general'
     ? 'Use this when you need to raise a dispute about the work, even if the job is already underway.'
@@ -531,37 +531,56 @@ const RequestDetailsPage = () => {
                   </div>
                   <p className="mt-3 text-sm leading-6 text-ink-muted">
                     {request.status === 'COMPLETED'
-                      ? 'This job has already been completed successfully.'
-                      : request.status === 'ASSIGNED' || request.status === 'IN_PROGRESS'
-                        ? 'Use the controls below when the work is finished or needs a status update.'
-                        : 'The request is still waiting for the next action.'}
+                      ? 'This job has been completed successfully.'
+                      : request.status === 'WORKER_COMPLETED'
+                        ? 'The worker has marked this job as done. Confirm completion or raise a dispute.'
+                        : request.status === 'ASSIGNED'
+                          ? 'The worker is currently working on this job.'
+                          : 'The request is still waiting for the next action.'}
                   </p>
                 </div>
               </div>
 
-              {!isWorker && request.status === 'ASSIGNED' ? (
-                <div className="mt-4 flex flex-col gap-3 border-t border-line pt-4 sm:flex-row">
-                  <button className="ui-button-primary flex-1" onClick={() => handleUpdateJobOutcome('COMPLETED')} disabled={isUpdatingStatus} type="button">
-                    Mark as Completed
-                  </button>
-                  {/* Raises a general dispute from the same action row */}
-                  <button
-                    className="ui-button-secondary flex-1"
-                    onClick={() => {
-                      setDisputeMode('general');
-                      setShowNotCompletedModal(true);
-                      setNotCompletedReasonError('');
-                      setNotCompletedReason('');
-                    }}
-                    type="button"
-                  >
-                    Raise Dispute
-                  </button>
+              {!isWorker && workerHasMarkedDone ? (
+                <div className="mt-4 border-t border-line pt-4">
+                  <div className="mb-4 rounded-card border border-amber-200 bg-amber-50 px-4 py-3">
+                    <div className="flex items-start gap-2">
+                      <span className="material-icons text-base text-amber-700">check_circle</span>
+                      <div>
+                        <p className="text-sm font-bold text-amber-900">Worker has marked this job as done</p>
+                        <p className="mt-1 text-sm text-amber-800">
+                          Confirm if everything was completed to your satisfaction, or raise a dispute if there are any issues.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <button
+                      className="ui-button-primary flex-1"
+                      onClick={() => handleUpdateJobOutcome('COMPLETED')}
+                      disabled={isUpdatingStatus}
+                      type="button"
+                    >
+                      {isUpdatingStatus ? 'Confirming...' : 'Confirm Job Complete'}
+                    </button>
+                    <button
+                      className="ui-button-danger flex-1"
+                      onClick={() => {
+                        setDisputeMode('general');
+                        setShowNotCompletedModal(true);
+                        setNotCompletedReasonError('');
+                        setNotCompletedReason('');
+                      }}
+                      type="button"
+                    >
+                      Raise a Dispute
+                    </button>
+                  </div>
                 </div>
               ) : null}
 
-              {canRaiseDispute ? (
-                <div className="mt-3 flex flex-col gap-3 border-t border-line pt-4 sm:flex-row">
+              {!isWorker && request.status === 'ASSIGNED' ? (
+                <div className="mt-4 flex flex-col gap-3 border-t border-line pt-4 sm:flex-row">
                   <button
                     className="ui-button-secondary flex-1"
                     onClick={() => {

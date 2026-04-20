@@ -15,7 +15,8 @@ const statusTone = (status) => {
   if (normalized === 'PENDING_PAYMENT') return 'warning';
   if (normalized === 'PAYMENT_UNDER_REVIEW') return 'warning';
   if (normalized === 'OPEN') return 'info';
-  if (normalized === 'ASSIGNED' || normalized === 'IN_PROGRESS') return 'warning';
+  if (normalized === 'ASSIGNED') return 'warning';
+  if (normalized === 'WORKER_COMPLETED') return 'warning';
   if (normalized === 'COMPLETED') return 'success';
   if (normalized === 'CANCELLED' || normalized === 'NOT_COMPLETED') return 'danger';
   return 'neutral';
@@ -25,6 +26,7 @@ const statusLabel = (status) => {
   const normalized = String(status || '').toUpperCase();
   if (normalized === 'PENDING_PAYMENT') return 'Awaiting Payment';
   if (normalized === 'PAYMENT_UNDER_REVIEW') return 'Under Review';
+  if (normalized === 'WORKER_COMPLETED') return 'Confirm Completion';
   return String(status || 'Unknown').replaceAll('_', ' ');
 };
 
@@ -95,7 +97,8 @@ const actionLabel = (status) => {
   const normalized = String(status || '').toUpperCase();
   if (normalized === 'PENDING_PAYMENT') return 'Complete Payment';
   if (normalized === 'PAYMENT_UNDER_REVIEW') return 'View Details';
-  if (normalized === 'ASSIGNED' || normalized === 'IN_PROGRESS') return 'Track Progress';
+  if (normalized === 'ASSIGNED') return 'Track Progress';
+  if (normalized === 'WORKER_COMPLETED') return 'Confirm or Dispute';
   if (normalized === 'COMPLETED') return 'View Summary';
   return 'View Details';
 };
@@ -105,35 +108,19 @@ const requestMetaBadge = (request) => {
   const quoteCount = getQuoteCount(request);
 
   if (normalized === 'PENDING_PAYMENT') {
-    return {
-      icon: 'payment',
-      text: 'Payment Pending',
-      className: 'text-amber-700',
-    };
+    return { icon: 'payment', text: 'Payment Pending', className: 'text-amber-700' };
   }
-
   if (normalized === 'PAYMENT_UNDER_REVIEW') {
-    return {
-      icon: 'hourglass_top',
-      text: 'Under Review',
-      className: 'text-amber-600',
-    };
+    return { icon: 'hourglass_top', text: 'Under Review', className: 'text-amber-600' };
   }
-
+  if (normalized === 'WORKER_COMPLETED') {
+    return { icon: 'task_alt', text: 'Worker Marked Done', className: 'text-amber-700' };
+  }
   if (normalized === 'COMPLETED') {
-    return {
-      icon: 'check_circle',
-      text: 'Done',
-      className: 'text-green-700',
-    };
+    return { icon: 'check_circle', text: 'Done', className: 'text-green-700' };
   }
-
-  if (normalized === 'ASSIGNED' || normalized === 'IN_PROGRESS') {
-    return {
-      icon: 'radio_button_checked',
-      text: 'Active Job',
-      className: 'text-amber-700',
-    };
+  if (normalized === 'ASSIGNED') {
+    return { icon: 'radio_button_checked', text: 'Active Job', className: 'text-amber-700' };
   }
 
   return {
@@ -189,7 +176,7 @@ const MyRequestsPage = () => {
       const status = String(request.status || '').toUpperCase();
       const budgetValue = Number(request.budget || 0);
 
-      if (status === 'PENDING_PAYMENT' || status === 'PAYMENT_UNDER_REVIEW' || status === 'OPEN' || status === 'ASSIGNED' || status === 'IN_PROGRESS') {
+      if (status === 'PENDING_PAYMENT' || status === 'PAYMENT_UNDER_REVIEW' || status === 'OPEN' || status === 'ASSIGNED' || status === 'WORKER_COMPLETED') {
         summary.active += 1;
       }
 

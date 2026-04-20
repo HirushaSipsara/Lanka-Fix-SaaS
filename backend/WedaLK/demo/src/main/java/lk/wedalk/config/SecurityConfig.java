@@ -71,6 +71,7 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.GET, "/api/requests/my").hasRole("SEEKER")
             .requestMatchers(HttpMethod.PUT, "/api/requests/*").hasRole("SEEKER")
             .requestMatchers(HttpMethod.DELETE, "/api/requests/*").hasRole("SEEKER")
+            .requestMatchers(HttpMethod.PATCH, "/api/requests/*/worker-complete").hasRole("WORKER")
             .requestMatchers(HttpMethod.GET, "/api/requests/worker/my").hasRole("WORKER")
             .requestMatchers(HttpMethod.POST, "/api/profiles/*/payment-slip").hasRole("WORKER")
             .requestMatchers(HttpMethod.GET, "/api/admin/payment-slips/pending").hasRole("ADMIN")
