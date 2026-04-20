@@ -18,7 +18,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/profiles")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000") // Allow frontend
 public class WorkerProfileController {
 
     private final WorkerProfileService workerProfileService;

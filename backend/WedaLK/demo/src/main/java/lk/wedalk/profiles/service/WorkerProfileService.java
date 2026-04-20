@@ -65,6 +65,7 @@ public class WorkerProfileService {
         return mapToResponse(savedProfile);
     }
 
+    @Transactional(readOnly = true)
     public List<WorkerProfileResponse> getAllProfiles() {
         return workerProfileRepository.findAll()
                 .stream()
@@ -72,12 +73,14 @@ public class WorkerProfileService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public WorkerProfileResponse getProfile(Long id) {
         WorkerProfile profile = workerProfileRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Profile not found"));
         return mapToResponse(profile);
     }
 
+    @Transactional(readOnly = true)
     public WorkerProfileResponse getProfileByUserId(Long userId) {
         WorkerProfile profile = workerProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new NotFoundException("Profile not found for user"));

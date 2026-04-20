@@ -38,7 +38,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/quotes")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class QuotationController {
 
     private final QuotationService quotationService;

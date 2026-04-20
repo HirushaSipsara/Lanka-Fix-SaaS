@@ -57,4 +57,17 @@ public class GlobalExceptionHandler {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                                 .body(ApiResponse.error("File too large"));
         }
+
+        /**
+         * Catch-all handler — prevents silent 500 errors in production.
+         * Returns a clean JSON error response instead of Spring's default HTML error page.
+         */
+        @ExceptionHandler(Exception.class)
+        public ResponseEntity<ApiResponse<Void>> handleGeneral(Exception ex) {
+                // Log the actual error for debugging (visible in Cloud Run logs)
+                System.err.println("Unhandled exception: " + ex.getMessage());
+                ex.printStackTrace();
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body(ApiResponse.error("Internal server error"));
+        }
 }
