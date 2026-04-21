@@ -141,9 +141,8 @@ export const deleteRequest = async (id) => {
 export const uploadRequestPaymentSlip = async (requestId, slipFile) => {
     const formData = new FormData();
     formData.append('slip', slipFile);
-    const response = await apiClient.post(`/requests/${requestId}/payment-slip`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    // Do NOT set Content-Type manually — axios auto-sets it with the correct multipart boundary
+    const response = await apiClient.post(`/requests/${requestId}/payment-slip`, formData);
     return response.data.data;
 };
 

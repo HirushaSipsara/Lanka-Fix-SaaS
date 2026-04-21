@@ -7,6 +7,7 @@ import ErrorBanner from '../../components/common/ErrorBanner';
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const sessionExpired = new URLSearchParams(location.search).get('session') === 'expired';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -66,6 +67,11 @@ const LoginPage = () => {
       )}
     >
       <div className="space-y-5">
+        {sessionExpired ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+            Your session has expired. Please sign in again to continue.
+          </div>
+        ) : null}
         <ErrorBanner message={error} />
 
         <form onSubmit={handleSubmit} className="space-y-5">
