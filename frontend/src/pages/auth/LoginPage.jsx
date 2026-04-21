@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { getDefaultRouteForRole, login } from '../../services/authService';
+import { useNavigate, Link, useLocation, Navigate } from 'react-router-dom';
+import { getCurrentUser, getDefaultRouteForRole, isAuthenticated, login } from '../../services/authService';
 import AuthShell from '../../components/ui/AuthShell';
 import ErrorBanner from '../../components/common/ErrorBanner';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const sessionExpired = new URLSearchParams(location.search).get('session') === 'expired';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -48,6 +49,10 @@ const LoginPage = () => {
     }
   };
 
+  if (isAuthenticated()) {
+    return <Navigate to={getDefaultRouteForRole(getCurrentUser()?.role)} replace />;
+  }
+
   return (
     <AuthShell
       title="Sign in"
@@ -62,6 +67,11 @@ const LoginPage = () => {
       )}
     >
       <div className="space-y-5">
+        {sessionExpired ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+            Your session has expired. Please sign in again to continue.
+          </div>
+        ) : null}
         <ErrorBanner message={error} />
 
         <form onSubmit={handleSubmit} className="space-y-5">
