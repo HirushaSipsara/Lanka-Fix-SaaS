@@ -4,9 +4,11 @@ import { getRequestById } from '../../services/requestService';
 import { createQuote } from '../../services/quoteService';
 import { formatBudget, formatCategoryLabel, getCategoryIcon } from '../../utils/constants';
 import { AlertPanel, EmptyState, LoadingPanel, PageIntro, StatusPill } from '../../components/ui/PortalPrimitives';
+import { useToast } from '../../components/common/ToastContext';
 
 const SubmitQuotePage = () => {
   const { requestId } = useParams();
+  const toast = useToast();
   const [request, setRequest] = useState(null);
   const [loadingRequest, setLoadingRequest] = useState(true);
   const [requestError, setRequestError] = useState('');
@@ -88,6 +90,19 @@ const SubmitQuotePage = () => {
 
       setSubmittedQuote(quote);
       setSubmitted(true);
+
+      // Reset form fields
+      setPrice('');
+      setEstimatedDays('');
+      setMessage('');
+      setErrors({});
+      setSubmitError('');
+
+      // Fire global success toast
+      toast.success(
+        `Quotation of LKR ${Number(quote.price).toLocaleString()} submitted successfully!`,
+        { title: 'Quote Sent' },
+      );
     } catch (err) {
       const responseMessage = err.response?.data?.message || '';
       const duplicateSubmission = responseMessage.toLowerCase().includes('already submitted') ||
@@ -95,8 +110,10 @@ const SubmitQuotePage = () => {
 
       if (duplicateSubmission) {
         setIsDuplicate(true);
+        toast.warning('You have already submitted a quote for this request.');
       } else {
         setSubmitError(responseMessage || 'Failed to submit your quotation. Please try again.');
+        toast.error('Quotation submission failed. Please try again.');
       }
     } finally {
       setSubmitting(false);
