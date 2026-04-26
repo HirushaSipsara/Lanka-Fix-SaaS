@@ -16,6 +16,8 @@ import CreateRequestPage from './pages/seeker/CreateRequestPage';
 import MyRequestsPage from './pages/seeker/MyRequestsPage';
 import RequestDetailsPage from './pages/seeker/RequestDetailsPage';
 import BrowseWorkersPage from './pages/seeker/BrowseWorkersPage';
+import BookWorkerPage from './pages/seeker/BookWorkerPage';
+import MyBookingsPage from './pages/seeker/MyBookingsPage';
 import CompareQuotesPage from './pages/seeker/CompareQuotesPage';
 import MyReviewsPage from './pages/seeker/MyReviewsPage';
 import WorkerDashboard from './pages/worker/WorkerDashboard';
@@ -24,6 +26,7 @@ import WorkerRequestDetailsPage from './pages/worker/WorkerRequestDetailsPage';
 import SubmitQuotePage from './pages/worker/SubmitQuotePage';
 import MyQuotationsPage from './pages/worker/MyQuotationsPage';
 import MyJobsPage from './pages/worker/MyJobsPage';
+import WorkerBookingsPage from './pages/worker/WorkerBookingsPage';
 import VerificationPage from './pages/worker/VerificationPage';
 
 
@@ -65,6 +68,8 @@ function App() {
               element={<CompareQuotesPage />}
             />
             <Route path="/browse-workers" element={<BrowseWorkersPage />} />
+            <Route path="/book-worker/:profileId" element={<BookWorkerPage />} />
+            <Route path="/my-bookings" element={<MyBookingsPage />} />
             <Route path="/my-reviews" element={<MyReviewsPage />} />
           </Route>
 
@@ -76,6 +81,7 @@ function App() {
             <Route path="/edit-profile/:id" element={<EditWorkerProfilePage />} />
             <Route path="/profile/:id" element={<WorkerProfilePage />} />
             <Route path="/worker/verification" element={<VerificationPage />} />
+            <Route path="/worker/bookings" element={<WorkerBookingsPage />} />
 
             <Route element={<RequireWorkerProfile />}>
               <Route path="/requests/:requestId/quote" element={<SubmitQuotePage />} />

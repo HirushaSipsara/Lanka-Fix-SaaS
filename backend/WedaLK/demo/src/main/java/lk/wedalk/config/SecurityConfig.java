@@ -96,6 +96,12 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, "/api/admin/requests/*/payment-reject").hasRole("ADMIN")
             .requestMatchers(HttpMethod.GET, "/api/requests/*/payment-slip/view").hasRole("ADMIN")
             .requestMatchers(HttpMethod.GET, "/api/profiles/*/payment-slip/view").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.POST, "/api/bookings").hasRole("SEEKER")
+            .requestMatchers(HttpMethod.GET, "/api/bookings/seeker").hasRole("SEEKER")
+            .requestMatchers(HttpMethod.DELETE, "/api/bookings/*").hasRole("SEEKER")
+            .requestMatchers(HttpMethod.GET, "/api/bookings/worker").hasRole("WORKER")
+            .requestMatchers(HttpMethod.PATCH, "/api/bookings/*/accept", "/api/bookings/*/reject")
+            .hasRole("WORKER")
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated());
 
