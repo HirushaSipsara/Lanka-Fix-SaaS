@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { getRequestById } from '../../services/requestService';
 import { createQuote } from '../../services/quoteService';
 import { formatBudget, formatCategoryLabel, getCategoryIcon } from '../../utils/constants';
+import { getApiErrorMessage } from '../../utils/formValidationMessages';
 import { AlertPanel, EmptyState, LoadingPanel, PageIntro, StatusPill } from '../../components/ui/PortalPrimitives';
 
 const SubmitQuotePage = () => {
@@ -96,7 +97,12 @@ const SubmitQuotePage = () => {
       if (duplicateSubmission) {
         setIsDuplicate(true);
       } else {
-        setSubmitError(responseMessage || 'Failed to submit your quotation. Please try again.');
+        setSubmitError(
+          getApiErrorMessage(
+            err,
+            'We could not submit your quotation. Check the numbers and your proposal, then try again.',
+          )
+        );
       }
     } finally {
       setSubmitting(false);
