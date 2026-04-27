@@ -66,3 +66,46 @@ export const deleteProfile = async (id) => {
     await apiClient.delete(`/profiles/${id}`);
     return true;
 };
+
+/**
+ * Upload a bank transfer payment slip to complete worker profile registration.
+ * @param {number} profileId - Worker profile ID
+ * @param {File} slipFile - The payment slip image or PDF
+ * @returns {Promise<Object>} Updated profile response
+ */
+export const uploadProfilePaymentSlip = async (profileId, slipFile) => {
+    const formData = new FormData();
+    formData.append('slip', slipFile);
+    const response = await apiClient.post(`/profiles/${profileId}/payment-slip`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data.data;
+};
+
+// ---- Admin: worker profile registration payment (same review flow as seeker requests) ----
+
+export const getAdminPendingProfilePaymentSlips = async () => {
+    const response = await apiClient.get('/admin/profile-payment-slips/pending');
+    return response.data.data;
+};
+
+export const adminApproveProfilePaymentSlip = async (profileId) => {
+    const response = await apiClient.post(`/admin/profiles/${profileId}/payment-approve`);
+    return response.data.data;
+};
+
+export const adminRejectProfilePaymentSlip = async (profileId, reason = '') => {
+    const response = await apiClient.post(`/admin/profiles/${profileId}/payment-reject`, { reason });
+    return response.data.data;
+};
+
+/**
+ * @param {number} profileId
+ * @returns {Promise<Blob>}
+ */
+export const getAdminProfilePaymentSlipBlob = async (profileId) => {
+    const response = await apiClient.get(`/profiles/${profileId}/payment-slip/view`, {
+        responseType: 'blob',
+    });
+    return response.data;
+};

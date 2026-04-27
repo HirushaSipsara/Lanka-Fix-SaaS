@@ -10,15 +10,17 @@ import {
   StatusPill,
 } from '../../components/ui/PortalPrimitives';
 import { deleteRequest, getRequestById, updateRequestStatus } from '../../services/requestService';
-import { getQuotesByRequest } from '../../services/quoteService';
+import { acceptQuote, getQuotesByRequest, rejectQuote } from '../../services/quoteService';
 import { getMyReviews, submitReview } from '../../services/reviewService';
 import { getDisputeByRequest, submitDispute } from '../../services/disputeService';
 import { formatBudget, formatCategoryLabel } from '../../utils/constants';
 import { resolveHttpError } from '../../utils/httpErrors';
 
 const getJobStatusLabel = (status) => {
+  if (status === 'PENDING_PAYMENT') return 'Awaiting Payment';
+  if (status === 'PAYMENT_UNDER_REVIEW') return 'Under Review';
   if (status === 'ASSIGNED') return 'Assigned';
-  if (status === 'IN_PROGRESS') return 'In Progress';
+  if (status === 'WORKER_COMPLETED') return 'Worker Completed — Confirm?';
   if (status === 'COMPLETED') return 'Completed';
   if (status === 'NOT_COMPLETED') return 'Not Completed';
   return String(status || '').replaceAll('_', ' ');
@@ -26,8 +28,11 @@ const getJobStatusLabel = (status) => {
 
 const statusTone = (status) => {
   const normalized = String(status || '').toUpperCase();
+  if (normalized === 'PENDING_PAYMENT') return 'warning';
+  if (normalized === 'PAYMENT_UNDER_REVIEW') return 'warning';
   if (normalized === 'OPEN') return 'info';
-  if (normalized === 'ASSIGNED' || normalized === 'IN_PROGRESS') return 'warning';
+  if (normalized === 'ASSIGNED') return 'warning';
+  if (normalized === 'WORKER_COMPLETED') return 'warning';
   if (normalized === 'COMPLETED') return 'success';
   if (normalized === 'NOT_COMPLETED' || normalized === 'CANCELLED') return 'danger';
   return 'neutral';
@@ -61,6 +66,14 @@ const formatDateTime = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'N/A';
   return date.toLocaleString();
+};
+
+const quoteStatusTone = (status) => {
+  const normalized = String(status || '').toUpperCase();
+  if (normalized === 'ACCEPTED') return 'success';
+  if (normalized === 'NOT_ACCEPTED' || normalized === 'REJECTED' || normalized === 'WITHDRAWN') return 'danger';
+  if (normalized === 'PENDING') return 'warning';
+  return 'info';
 };
 
 const buildTimeline = (request, quoteCount) => {
@@ -150,6 +163,7 @@ const RequestDetailsPage = () => {
   const [quotes, setQuotes] = useState([]);
   const [quotesLoading, setQuotesLoading] = useState(false);
   const [quotesError, setQuotesError] = useState('');
+  const [actingQuoteId, setActingQuoteId] = useState(null);
 
   // Review form state
   const [reviewRating, setReviewRating] = useState(null);
@@ -303,8 +317,7 @@ const RequestDetailsPage = () => {
   };
 
   const handleUpdateJobOutcome = async (status) => {
-    const statusLabel = status === 'COMPLETED' ? 'Completed' : 'Not Completed';
-    const confirmed = window.confirm(`Are you sure you want to mark this job as ${statusLabel}?`);
+    const confirmed = window.confirm('Confirm that the job was completed to your satisfaction?');
     if (!confirmed) return;
 
     setIsUpdatingStatus(true);
@@ -312,12 +325,35 @@ const RequestDetailsPage = () => {
 
     try {
       await updateRequestStatus(request.id, status);
-      setStatusUpdateMessage(`Job marked as ${statusLabel} successfully.`);
+      setStatusUpdateMessage(`Job marked as ${getJobStatusLabel(status)} successfully.`);
       await fetchRequestDetails(false);
     } catch (err) {
       setStatusUpdateMessage(err.response?.data?.message || 'Failed to update job status. Please try again.');
     } finally {
       setIsUpdatingStatus(false);
+    }
+  };
+
+  const handleQuoteDecision = async (quoteId, decision) => {
+    const verb = decision === 'accept' ? 'accept' : 'reject';
+    const confirmed = window.confirm(`Are you sure you want to ${verb} this quotation?`);
+    if (!confirmed) return;
+
+    setActingQuoteId(quoteId);
+    setStatusUpdateMessage('');
+    try {
+      if (decision === 'accept') {
+        await acceptQuote(quoteId);
+        setStatusUpdateMessage('Quotation accepted. Worker has been assigned to this request.');
+      } else {
+        await rejectQuote(quoteId);
+        setStatusUpdateMessage('Quotation rejected successfully.');
+      }
+      await Promise.all([fetchRequestDetails(false), fetchQuotes()]);
+    } catch (err) {
+      setStatusUpdateMessage(resolveHttpError(err, `Failed to ${verb} quotation. Please try again.`));
+    } finally {
+      setActingQuoteId(null);
     }
   };
 
@@ -358,7 +394,7 @@ const RequestDetailsPage = () => {
   const tone = statusTone(request.status);
   const accentClass = metricAccent(tone);
   const canManageRequest = request.status === 'OPEN';
-  const canRaiseDispute = request.status === 'IN_PROGRESS';
+  const canDecideQuotes = !isWorker && request.status === 'OPEN';
   const disputeModalTitle = disputeMode === 'general' ? 'Raise Dispute' : 'Mark as Not Completed';
   const disputeModalMessage = disputeMode === 'general'
     ? 'Use this when you need to raise a dispute about the work, even if the job is already underway.'
@@ -378,6 +414,25 @@ const RequestDetailsPage = () => {
           <span className="material-icons text-base">arrow_back</span>
           {isWorker ? 'Back to Browse Requests' : 'Back to My Requests'}
         </Link>
+
+        {request.status === 'PENDING_PAYMENT' && request.paymentRejectionNote ? (
+          <div className="rounded-card border border-red-200 bg-red-50 px-5 py-4">
+            <div className="flex items-start gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-100">
+                <span className="material-icons text-xl text-red-700">cancel</span>
+              </span>
+              <div>
+                <p className="font-bold text-red-900">Payment Slip Rejected</p>
+                <p className="mt-1 text-sm leading-6 text-red-800">
+                  <span className="font-semibold">Admin note:</span> {request.paymentRejectionNote}
+                </p>
+                <p className="mt-2 text-sm text-red-700">
+                  Please upload a new payment slip that addresses the issue above.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_320px]">
           <section className="space-y-5">
@@ -508,22 +563,64 @@ const RequestDetailsPage = () => {
                   </div>
                   <p className="mt-3 text-sm leading-6 text-ink-muted">
                     {request.status === 'COMPLETED'
-                      ? 'This job has already been completed successfully.'
-                      : request.status === 'ASSIGNED' || request.status === 'IN_PROGRESS'
-                        ? 'Use the controls below when the work is finished or needs a status update.'
-                        : 'The request is still waiting for the next action.'}
+                      ? 'This job has been completed successfully.'
+                      : request.status === 'WORKER_COMPLETED'
+                        ? 'The worker has marked this job as done. Confirm or raise a dispute.'
+                        : request.status === 'ASSIGNED'
+                          ? 'The worker is currently working on this job.'
+                          : 'The request is still waiting for the next action.'}
                   </p>
                 </div>
               </div>
 
+              {/* Worker has marked done — seeker confirms or disputes */}
+              {!isWorker && request.status === 'WORKER_COMPLETED' ? (
+                <div className="mt-4 border-t border-line pt-4">
+                  <div className="mb-4 rounded-card border border-amber-200 bg-amber-50 px-4 py-3">
+                    <div className="flex items-start gap-2">
+                      <span className="material-icons text-base text-amber-700">task_alt</span>
+                      <div>
+                        <p className="text-sm font-bold text-amber-900">Worker has marked this job as done</p>
+                        <p className="mt-1 text-sm text-amber-800">
+                          Confirm if the work was completed to your satisfaction, or raise a dispute if there are any issues.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <button
+                      className="ui-button-primary flex-1"
+                      onClick={() => handleUpdateJobOutcome('COMPLETED')}
+                      disabled={isUpdatingStatus}
+                      type="button"
+                    >
+                      {isUpdatingStatus ? 'Confirming...' : 'Confirm Job Complete'}
+                    </button>
+                    <button
+                      className="ui-button-danger flex-1"
+                      onClick={() => {
+                        setDisputeMode('general');
+                        setShowNotCompletedModal(true);
+                        setNotCompletedReasonError('');
+                        setNotCompletedReason('');
+                      }}
+                      type="button"
+                    >
+                      Raise a Dispute
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Job is ASSIGNED — seeker can only raise a dispute, not mark complete */}
               {!isWorker && request.status === 'ASSIGNED' ? (
                 <div className="mt-4 flex flex-col gap-3 border-t border-line pt-4 sm:flex-row">
-                  <button className="ui-button-primary flex-1" onClick={() => handleUpdateJobOutcome('COMPLETED')} disabled={isUpdatingStatus} type="button">
-                    Mark as Completed
-                  </button>
-                  {/* Raises a general dispute from the same action row */}
+                  <div className="flex-1 rounded-card border border-brand-100 bg-brand-50/60 px-4 py-3 text-sm text-brand-800">
+                    <span className="material-icons text-base align-middle mr-1">engineering</span>
+                    Worker is on the job. Once they mark it done, you can confirm or dispute.
+                  </div>
                   <button
-                    className="ui-button-secondary flex-1"
+                    className="ui-button-secondary sm:w-auto"
                     onClick={() => {
                       setDisputeMode('general');
                       setShowNotCompletedModal(true);
@@ -537,22 +634,6 @@ const RequestDetailsPage = () => {
                 </div>
               ) : null}
 
-              {canRaiseDispute ? (
-                <div className="mt-3 flex flex-col gap-3 border-t border-line pt-4 sm:flex-row">
-                  <button
-                    className="ui-button-secondary flex-1"
-                    onClick={() => {
-                      setDisputeMode('general');
-                      setShowNotCompletedModal(true);
-                      setNotCompletedReasonError('');
-                      setNotCompletedReason('');
-                    }}
-                    type="button"
-                  >
-                    Raise Dispute
-                  </button>
-                </div>
-              ) : null}
 
               {/* SCRUM-89: AC6 — Admin review banner shown after NOT_COMPLETED */}
               {request.status === 'NOT_COMPLETED' ? (
@@ -609,6 +690,14 @@ const RequestDetailsPage = () => {
                       ? disputeOutcome.resolution || 'No final ruling note available.'
                       : 'This dispute is under review. Final decision will appear here once resolved.'}
                   </p>
+
+                  {disputeOutcome.status === 'RESOLVED' ? (
+                    <p className="mt-2 text-sm font-semibold text-ink">
+                      {String(disputeOutcome.resolveOutcome || '').toUpperCase() === 'SUSPEND_WORKER'
+                        ? 'Worker banned.'
+                        : 'Completed.'}
+                    </p>
+                  ) : null}
 
                   {disputeOutcome.status === 'RESOLVED' ? (
                     <p className="mt-2 text-sm text-ink-muted">
@@ -708,12 +797,9 @@ const RequestDetailsPage = () => {
                     <p className="ui-stat-label">Responses</p>
                     <h2 className="mt-2 text-xl font-bold text-ink">Quotes Received</h2>
                     <p className="mt-2 text-sm leading-6 text-ink-muted">
-                      Scan the latest quotations here, then select a worker to continue with completion and review.
+                      Review responses from workers for context while coordinating your direct bookings in the bookings flow.
                     </p>
                   </div>
-                  <Link to={`/my-requests/${requestId}/quotations`} className="ui-button-primary w-full sm:w-auto">
-                    Select Worker
-                  </Link>
                 </div>
 
                 <div className="mt-5">
@@ -756,7 +842,9 @@ const RequestDetailsPage = () => {
                                 <p className="text-sm text-ink-muted">Quote #{quote.id}</p>
                               </div>
                             </div>
-                            <StatusPill tone="info">Received</StatusPill>
+                            <StatusPill tone={quoteStatusTone(quote.status)}>
+                              {String(quote.status || 'PENDING').replaceAll('_', ' ')}
+                            </StatusPill>
                           </div>
 
                           <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -771,6 +859,34 @@ const RequestDetailsPage = () => {
                               </p>
                             </div>
                           </div>
+
+                          <div className="mt-4 rounded-card border border-line bg-white px-4 py-3">
+                            <p className="ui-stat-label">Full quotation (proposal)</p>
+                            <p className="mt-2 whitespace-pre-line text-sm leading-7 text-ink-muted">
+                              {quote.message?.trim() ? quote.message : 'No written proposal was provided for this quote.'}
+                            </p>
+                          </div>
+
+                          {canDecideQuotes && String(quote.status || '').toUpperCase() === 'PENDING' ? (
+                            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                              <button
+                                type="button"
+                                className="ui-button-primary flex-1"
+                                disabled={actingQuoteId === quote.id}
+                                onClick={() => handleQuoteDecision(quote.id, 'accept')}
+                              >
+                                {actingQuoteId === quote.id ? 'Processing...' : 'Accept & Assign Worker'}
+                              </button>
+                              <button
+                                type="button"
+                                className="ui-button-secondary flex-1"
+                                disabled={actingQuoteId === quote.id}
+                                onClick={() => handleQuoteDecision(quote.id, 'reject')}
+                              >
+                                Reject Quote
+                              </button>
+                            </div>
+                          ) : null}
                         </article>
                       ))}
                     </div>

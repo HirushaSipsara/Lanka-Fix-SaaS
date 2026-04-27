@@ -85,14 +85,14 @@ const Navbar = ({ variant = 'landing' }) => {
           !isPortal && !scrolled && 'bg-transparent'
         )}
       >
-        <div className="container flex items-center justify-between py-2">
-          <Link to="/" className="flex items-center gap-3" onClick={closeMobile}>
-            <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-brand">
-              <img src="/LankaFIX%20Logo.png" alt="LankaFIX logo" className="h-10 w-10 object-contain" />
+        <div className="container flex min-w-0 items-center justify-between gap-2 py-2 sm:gap-3">
+          <Link to={user ? dashboardPath : '/'} className="flex min-w-0 shrink items-center gap-2 sm:gap-3" onClick={closeMobile}>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-brand sm:h-10 sm:w-10">
+              <img src="/LankaFIX%20Logo.png" alt="LankaFIX logo" className="h-9 w-9 object-contain sm:h-10 sm:w-10" />
             </span>
             <span
               className={cn(
-                'font-display text-2xl font-extrabold tracking-snugger',
+                'font-display text-lg font-extrabold tracking-snugger sm:text-2xl',
                 showLightDesktop || isPortal ? 'text-white' : 'text-ink'
               )}
             >
@@ -156,15 +156,11 @@ const Navbar = ({ variant = 'landing' }) => {
                 {role === 'ADMIN' ? <NavLink to="/admin/disputes" className={navLinkClass}>Disputes</NavLink> : null}
                 {role === 'WORKER' ? <NavLink to="/browse-requests" className={navLinkClass}>Find Work</NavLink> : null}
                 {role === 'SEEKER' ? <NavLink to="/browse-workers" className={navLinkClass}>Browse Workers</NavLink> : null}
+                {role === 'SEEKER' ? <NavLink to="/my-bookings" className={navLinkClass}>My Bookings</NavLink> : null}
                 {role === 'WORKER' ? <NavLink to="/my-quotations" className={navLinkClass}>My Quotations</NavLink> : null}
+                {role === 'WORKER' ? <NavLink to="/worker/bookings" className={navLinkClass}>Bookings</NavLink> : null}
                 {role === 'SEEKER' ? <NavLink to="/my-requests" className={navLinkClass}>My Requests</NavLink> : null}
                 <div className="ml-3 flex items-center gap-3">
-                  <button
-                    type="button"
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition hover:bg-white/20"
-                  >
-                    <span role="img" aria-label="Notifications">🔔</span>
-                  </button>
                   <Link
                     to="/account/profile"
                     title={displayName}
@@ -241,7 +237,9 @@ const Navbar = ({ variant = 'landing' }) => {
                 {role === 'ADMIN' ? <NavLink to="/admin/disputes" className={mobilePortalNavLinkClass} onClick={closeMobile}>Disputes</NavLink> : null}
                 {role === 'WORKER' ? <NavLink to="/browse-requests" className={mobilePortalNavLinkClass} onClick={closeMobile}>Find Work</NavLink> : null}
                 {role === 'SEEKER' ? <NavLink to="/browse-workers" className={mobilePortalNavLinkClass} onClick={closeMobile}>Browse Workers</NavLink> : null}
+                {role === 'SEEKER' ? <NavLink to="/my-bookings" className={mobilePortalNavLinkClass} onClick={closeMobile}>My Bookings</NavLink> : null}
                 {role === 'WORKER' ? <NavLink to="/my-quotations" className={mobilePortalNavLinkClass} onClick={closeMobile}>My Quotations</NavLink> : null}
+                {role === 'WORKER' ? <NavLink to="/worker/bookings" className={mobilePortalNavLinkClass} onClick={closeMobile}>Bookings</NavLink> : null}
                 {role === 'SEEKER' ? <NavLink to="/my-requests" className={mobilePortalNavLinkClass} onClick={closeMobile}>My Requests</NavLink> : null}
               </>
             )}

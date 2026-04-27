@@ -1,8 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { createRequest, updateRequest } from '../../services/requestService';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  createRequest,
+  generateRequestDescription,
+  updateRequest,
+  uploadRequestPaymentSlip,
+} from '../../services/requestService';
 import { CATEGORIES, formatBudget } from '../../utils/constants';
+import { getApiErrorMessage } from '../../utils/formValidationMessages';
 import { AlertPanel, PageIntro, SectionCard, StatusPill } from '../../components/ui/PortalPrimitives';
+import ErrorBanner from '../../components/common/ErrorBanner';
 
 const urgencyOptions = [
   { value: 'LOW', label: 'Low', subtitle: 'Within a week', icon: '📅', tone: 'info', hint: 'Flexible timing' },
@@ -26,11 +33,25 @@ const categoryHints = {
   OTHER: 'Custom work not covered above',
 };
 
+const PAYMENT_DETAILS = {
+  amount: 500,
+  bank: 'Bank of Ceylon',
+  accountNumber: '76221736',
+  branch: 'Colombo Fort',
+  accountName: 'WedaLK Platform (Pvt) Ltd',
+};
+
 const stepDetails = [
   { step: 1, title: 'Title & Category', description: 'Define the job and where it is located.' },
   { step: 2, title: 'Details & Timing', description: 'Explain the problem, urgency, and budget.' },
   { step: 3, title: 'Review & Submit', description: 'Double-check the final details before posting.' },
+  { step: 4, title: 'Payment', description: 'Upload your bank transfer slip to publish.' },
 ];
+
+const DESCRIPTION_LIMIT = 2000;
+const AI_CONTEXT_MESSAGE = 'Please enter a Job Title and Category first so the AI understands your needs.';
+const AI_FAILURE_MESSAGE = 'AI generation is currently unavailable. Please write your description manually or try again later.';
+const DESCRIPTION_LIMIT_MESSAGE = 'Description cannot exceed 2000 characters.';
 
 const previewText = (text) => {
   if (!text) return 'A clear description helps workers understand the issue and quote accurately.';
@@ -44,9 +65,16 @@ const CreateRequestPage = () => {
   const requestToEdit = isEditMode ? location.state.requestToEdit : null;
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiBanner, setAiBanner] = useState({ message: '', type: 'error' });
+  const [hasAiDraft, setHasAiDraft] = useState(false);
+  const [descriptionLimitWarning, setDescriptionLimitWarning] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState({});
+  const [paymentSlip, setPaymentSlip] = useState(null);
+  const [paymentSlipPreview, setPaymentSlipPreview] = useState('');
+  const slipInputRef = useRef(null);
   const [formData, setFormData] = useState({
     title: requestToEdit?.title || '',
     category: requestToEdit?.category || '',
@@ -80,26 +108,172 @@ const CreateRequestPage = () => {
     if (step === 2) {
       if (!formData.description.trim()) nextErrors.description = 'Description is required';
       else if (formData.description.trim().length < 20) nextErrors.description = 'Description must be at least 20 characters';
-      else if (formData.description.length > 2000) nextErrors.description = 'Description must not exceed 2000 characters';
+      else if (formData.description.length > DESCRIPTION_LIMIT) nextErrors.description = 'Description must not exceed 2000 characters';
     }
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
-    if (!formData.title || !formData.description || !formData.locationArea || !formData.category || !formData.urgency) {
-      setError('Please fill in all required details before submitting.');
+  const handleDescriptionChange = (value) => {
+    if (value.length > DESCRIPTION_LIMIT) {
+      handleChange('description', value.slice(0, DESCRIPTION_LIMIT));
+      setDescriptionLimitWarning(DESCRIPTION_LIMIT_MESSAGE);
       return;
     }
-    if (!formData.budget && formData.budget !== 0) {
-      setError('Please provide a budget for your request.');
+
+    handleChange('description', value);
+    setDescriptionLimitWarning('');
+  };
+
+  const handleDescriptionBeforeInput = (event) => {
+    const incomingText = event.nativeEvent?.data || '';
+    if (!incomingText) return;
+
+    const textarea = event.currentTarget;
+    const selectedLength = textarea.selectionEnd - textarea.selectionStart;
+    const nextLength = formData.description.length - selectedLength + incomingText.length;
+
+    if (nextLength > DESCRIPTION_LIMIT) {
+      event.preventDefault();
+      setDescriptionLimitWarning(DESCRIPTION_LIMIT_MESSAGE);
+    }
+  };
+
+  const handleDescriptionPaste = (event) => {
+    const pastedText = event.clipboardData.getData('text');
+    if (!pastedText) return;
+
+    const textarea = event.currentTarget;
+    const selectedLength = textarea.selectionEnd - textarea.selectionStart;
+    const availableCharacters = DESCRIPTION_LIMIT - (formData.description.length - selectedLength);
+
+    if (pastedText.length > availableCharacters) {
+      event.preventDefault();
+      const allowedPaste = pastedText.slice(0, Math.max(availableCharacters, 0));
+      const nextDescription =
+        formData.description.slice(0, textarea.selectionStart) +
+        allowedPaste +
+        formData.description.slice(textarea.selectionEnd);
+
+      handleChange('description', nextDescription.slice(0, DESCRIPTION_LIMIT));
+      setDescriptionLimitWarning(DESCRIPTION_LIMIT_MESSAGE);
+    }
+  };
+
+  const handleSlipChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    const maxSizeBytes = 5 * 1024 * 1024;
+
+    if (!allowedTypes.includes(file.type)) {
+      setPaymentSlip(null);
+      setPaymentSlipPreview('');
+      setErrors((prev) => ({ ...prev, paymentSlip: 'Please upload a JPG, PNG, or PDF file.' }));
+      return;
+    }
+
+    if (file.size > maxSizeBytes) {
+      setPaymentSlip(null);
+      setPaymentSlipPreview('');
+      setErrors((prev) => ({ ...prev, paymentSlip: 'Payment slip must be 5 MB or smaller.' }));
+      return;
+    }
+
+    setPaymentSlip(file);
+    setErrors((prev) => ({ ...prev, paymentSlip: '' }));
+
+    if (file.type === 'application/pdf') {
+      setPaymentSlipPreview('pdf');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => setPaymentSlipPreview(String(reader.result || ''));
+    reader.readAsDataURL(file);
+  };
+
+  const handleAiAssist = async () => {
+    if (!formData.title.trim() || !formData.category) {
+      setAiBanner({ message: AI_CONTEXT_MESSAGE, type: 'warning' });
+      return;
+    }
+
+    setAiBanner({ message: '', type: 'error' });
+    setDescriptionLimitWarning('');
+    setAiLoading(true);
+
+    try {
+      const response = await generateRequestDescription({
+        title: formData.title.trim(),
+        category: formData.category,
+        locationArea: formData.locationArea.trim(),
+        urgency: formData.urgency,
+        existingDescription: formData.description.trim(),
+      });
+      handleChange('description', (response?.draft || '').slice(0, DESCRIPTION_LIMIT));
+      setHasAiDraft(true);
+      setDescriptionLimitWarning('');
+    } catch (err) {
+      setAiBanner({ message: AI_FAILURE_MESSAGE, type: 'error' });
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (isEditMode) {
+      if (!formData.title || !formData.description || !formData.locationArea || !formData.category || !formData.urgency) {
+        setError('Please fill in all required details before submitting.');
+        return;
+      }
+      setError('');
+      setLoading(true);
+      try {
+        const payload = {
+          title: formData.title,
+          category: formData.category,
+          locationArea: formData.locationArea,
+          description: formData.description,
+          urgency: formData.urgency,
+          budget: formData.budget,
+        };
+        await updateRequest(requestToEdit.id, payload);
+        setSuccess(true);
+        setTimeout(() => navigate(`/my-requests/${requestToEdit.id}`), 1800);
+      } catch (err) {
+        setError(getApiErrorMessage(err, 'Could not save your changes. Check the form and try again.'));
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // New request: Step 3 submit advances to payment step
+    if (currentStep === 3) {
+      if (!formData.title || !formData.description || !formData.locationArea || !formData.category || !formData.urgency) {
+        setError('Please fill in all required details before submitting.');
+        return;
+      }
+      if (!formData.budget && formData.budget !== 0) {
+        setError('Please provide a budget for your request.');
+        return;
+      }
+      setCurrentStep(4);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // Step 4: create request then upload slip
+    if (!paymentSlip) {
+      setErrors((prev) => ({ ...prev, paymentSlip: 'Please upload your bank transfer slip to continue.' }));
       return;
     }
 
     setError('');
     setLoading(true);
-
     try {
       const payload = {
         title: formData.title,
@@ -109,18 +283,21 @@ const CreateRequestPage = () => {
         urgency: formData.urgency,
         budget: formData.budget,
       };
-
-      if (isEditMode) {
-        await updateRequest(requestToEdit.id, payload);
-        setSuccess(true);
-        setTimeout(() => navigate(`/my-requests/${requestToEdit.id}`), 1800);
-      } else {
-        await createRequest(payload);
-        setSuccess(true);
-        setTimeout(() => navigate('/my-requests'), 1800);
-      }
+      const created = await createRequest(payload);
+      await uploadRequestPaymentSlip(created.id, paymentSlip);
+      setSuccess(true);
+      setTimeout(() => navigate('/seeker/dashboard'), 1800);
     } catch (err) {
-      setError(err.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} request. Please try again.`);
+      if (err?.normalized?.status === 401 || err?.response?.status === 401) {
+        setError('__SESSION_EXPIRED__');
+      } else {
+        setError(
+          getApiErrorMessage(
+            err,
+            'We could not submit your request. Check your details and payment slip, then try again.',
+          )
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -147,7 +324,17 @@ const CreateRequestPage = () => {
           light
         />
 
-        {error ? (
+        {error === '__SESSION_EXPIRED__' ? (
+          <AlertPanel tone="danger" icon="lock" title="Session expired">
+            <p>
+              Your login session has expired. Please{' '}
+              <Link to="/login" className="font-semibold underline">
+                sign in again
+              </Link>{' '}
+              and resubmit your request.
+            </p>
+          </AlertPanel>
+        ) : error ? (
           <AlertPanel tone="danger" icon="error_outline" title="Please review your request">
             <p>{error}</p>
           </AlertPanel>
@@ -155,7 +342,7 @@ const CreateRequestPage = () => {
 
         {success ? (
           <AlertPanel tone="success" icon="check_circle" title="Request saved">
-            <p>Request {isEditMode ? 'updated' : 'created'} successfully. Redirecting...</p>
+            <p>{isEditMode ? 'Request updated successfully.' : 'Payment slip submitted. Your request is under review.'} Redirecting...</p>
           </AlertPanel>
         ) : null}
 
@@ -327,15 +514,42 @@ const CreateRequestPage = () => {
                 <div className="ui-field">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <label className="ui-label" htmlFor="description">Task Description</label>
-                    <span className="text-xs font-semibold text-ink-subtle">{formData.description.length} / 2000</span>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="text-xs font-semibold text-ink-subtle">{formData.description.length} / {DESCRIPTION_LIMIT}</span>
+                      <button
+                        type="button"
+                        onClick={handleAiAssist}
+                        disabled={aiLoading}
+                        className="inline-flex min-h-[36px] items-center gap-2 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-brand-900 transition hover:bg-brand-100 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        <span className={`material-icons text-base ${aiLoading ? 'animate-spin' : ''}`}>
+                          {aiLoading ? 'progress_activity' : 'auto_awesome'}
+                        </span>
+                        {aiLoading ? 'Drafting...' : hasAiDraft ? 'Regenerate Draft' : 'AI Assist'}
+                      </button>
+                    </div>
                   </div>
+                  <ErrorBanner
+                    message={aiBanner.message}
+                    type={aiBanner.type}
+                    onClose={() => setAiBanner({ message: '', type: 'error' })}
+                  />
                   <textarea
                     id="description"
                     value={formData.description}
-                    onChange={(event) => handleChange('description', event.target.value)}
+                    onBeforeInput={handleDescriptionBeforeInput}
+                    onChange={(event) => handleDescriptionChange(event.target.value)}
+                    onPaste={handleDescriptionPaste}
                     placeholder="Example: I need a leaking tap fixed in the kitchen. It seems to be dripping from the handle..."
                     rows="6"
                     className="ui-textarea"
+                    maxLength={DESCRIPTION_LIMIT}
+                    disabled={aiLoading}
+                  />
+                  <ErrorBanner
+                    message={descriptionLimitWarning}
+                    type="warning"
+                    onClose={() => setDescriptionLimitWarning('')}
                   />
                   {errors.description ? <p className="ui-error-text">{errors.description}</p> : null}
                   <div className="grid gap-3 sm:grid-cols-3">
@@ -480,6 +694,106 @@ const CreateRequestPage = () => {
               </div>
             ) : null}
 
+            {currentStep === 4 ? (
+              <div className="space-y-5">
+                <div className="border-b border-line pb-4">
+                  <h2 className="text-xl font-bold text-ink sm:text-2xl">Complete Payment</h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-muted">
+                    Make a bank transfer using the details below, then upload your payment slip to publish your request.
+                  </p>
+                </div>
+
+                <div className="rounded-card border border-amber-200 bg-amber-50 px-5 py-5">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white">
+                      <span className="material-icons text-xl">account_balance</span>
+                    </span>
+                    <div>
+                      <p className="text-base font-bold text-amber-900">Bank Transfer Required</p>
+                      <p className="mt-1 text-sm leading-6 text-amber-800">
+                        Transfer the exact amount shown below before uploading your slip.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {[
+                      { label: 'Amount', value: `Rs. ${PAYMENT_DETAILS.amount.toLocaleString()}.00`, highlight: true },
+                      { label: 'Account Name', value: PAYMENT_DETAILS.accountName },
+                      { label: 'Account Number', value: PAYMENT_DETAILS.accountNumber },
+                      { label: 'Bank', value: PAYMENT_DETAILS.bank },
+                      { label: 'Branch', value: PAYMENT_DETAILS.branch },
+                    ].map((item) => (
+                      <div
+                        key={item.label}
+                        className={`rounded-card border px-4 py-3 ${item.highlight ? 'border-amber-300 bg-white' : 'border-amber-100 bg-white/70'}`}
+                      >
+                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">{item.label}</p>
+                        <p className={`mt-1 font-bold text-ink ${item.highlight ? 'text-xl text-amber-900' : 'text-base'}`}>{item.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="ui-field">
+                  <p className="ui-label">Upload Payment Slip</p>
+                  <p className="mt-1 text-sm text-ink-muted">Accepted formats: JPG, PNG, or PDF — max 5 MB</p>
+
+                  <div
+                    className={`mt-3 flex flex-col items-center justify-center rounded-card border-2 border-dashed px-6 py-8 transition cursor-pointer ${paymentSlip ? 'border-green-300 bg-green-50' : 'border-brand-200 bg-brand-50/50 hover:bg-brand-50'}`}
+                    onClick={() => slipInputRef.current?.click()}
+                    onKeyDown={(e) => e.key === 'Enter' && slipInputRef.current?.click()}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    {paymentSlip ? (
+                      <div className="flex flex-col items-center gap-3 text-center">
+                        {paymentSlipPreview && paymentSlipPreview !== 'pdf' ? (
+                          <img src={paymentSlipPreview} alt="Slip preview" className="max-h-40 rounded-card object-contain shadow-soft" />
+                        ) : (
+                          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
+                            <span className="material-icons text-3xl text-green-700">picture_as_pdf</span>
+                          </span>
+                        )}
+                        <div>
+                          <p className="text-sm font-bold text-green-800">{paymentSlip.name}</p>
+                          <p className="mt-1 text-xs text-green-700">{(paymentSlip.size / 1024).toFixed(1)} KB — Click to change</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-3 text-center">
+                        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-100">
+                          <span className="material-icons text-3xl text-brand-700">upload_file</span>
+                        </span>
+                        <div>
+                          <p className="text-sm font-bold text-brand-800">Click to upload your slip</p>
+                          <p className="mt-1 text-xs text-ink-muted">JPG, PNG or PDF up to 5 MB</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <input
+                    ref={slipInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,application/pdf"
+                    onChange={handleSlipChange}
+                    className="hidden"
+                  />
+                  {errors.paymentSlip ? <p className="mt-2 ui-error-text">{errors.paymentSlip}</p> : null}
+                </div>
+
+                <div className="rounded-card border border-line bg-surface-muted/60 px-4 py-4">
+                  <div className="flex items-start gap-3">
+                    <span className="material-icons mt-0.5 text-brand-700">info</span>
+                  <p className="text-sm leading-6 text-ink-muted">
+                    After uploading your slip, our team will review the payment. Your request will go live once the payment is verified — usually within a few hours.
+                  </p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
             <div className="mt-6 flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between">
               {currentStep > 1 ? (
                 <button type="button" className="ui-button-ghost w-full sm:w-auto" onClick={() => setCurrentStep((step) => step - 1)}>
@@ -500,9 +814,15 @@ const CreateRequestPage = () => {
                 >
                   Next Step
                 </button>
+              ) : currentStep === 3 ? (
+                <button type="button" className="ui-button-primary w-full sm:w-auto" onClick={handleSubmit} disabled={isEditMode && (loading || success)}>
+                  {isEditMode
+                    ? (loading ? 'Updating...' : success ? 'Updated!' : 'Update Request')
+                    : 'Continue to Payment'}
+                </button>
               ) : (
                 <button type="button" className="ui-button-primary w-full sm:w-auto" onClick={handleSubmit} disabled={loading || success}>
-                  {loading ? (isEditMode ? 'Updating...' : 'Posting...') : success ? (isEditMode ? 'Updated!' : 'Posted!') : (isEditMode ? 'Update Request' : 'Post Request')}
+                  {loading ? 'Submitting...' : success ? 'Submitted for Review!' : 'Submit Payment Slip'}
                 </button>
               )}
             </div>

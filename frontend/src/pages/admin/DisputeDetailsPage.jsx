@@ -5,12 +5,27 @@ import { EmptyState, LoadingPanel, PageIntro, SectionCard, StatusPill } from '..
 import { getDisputeById, resolveDispute } from '../../services/disputeService';
 
 const isResolved = (status) => String(status || '').toUpperCase() === 'RESOLVED';
+const isBanOutcome = (outcome) => String(outcome || '').toUpperCase() === 'SUSPEND_WORKER';
+
+const formatStatusLabel = (value) =>
+  String(value || '')
+    .replaceAll('_', ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 
 const formatDateTime = (value) => {
   if (!value) return 'N/A';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'N/A';
   return date.toLocaleString();
+};
+
+const getJobStatusLabel = (dispute) => {
+  const raw = formatStatusLabel(dispute?.requestStatus);
+  if (isResolved(dispute?.status) && String(dispute?.requestStatus || '').toUpperCase() === 'NOT_COMPLETED') {
+    return 'Closed after conflict (not completed)';
+  }
+  return raw || '—';
 };
 
 const DisputeDetailsPage = () => {
@@ -54,12 +69,11 @@ const DisputeDetailsPage = () => {
     };
   }, [disputeId]);
 
-  const handleResolve = async (event) => {
-    event.preventDefault();
+  const handleResolve = async (outcome) => {
     const trimmed = resolutionText.trim();
 
     if (!trimmed) {
-      setError('Please provide resolution notes before resolving this dispute.');
+      setError('Please add resolution notes so both parties can see why this was closed.');
       return;
     }
 
@@ -67,15 +81,26 @@ const DisputeDetailsPage = () => {
       return;
     }
 
+    if (outcome === 'SUSPEND_WORKER') {
+      const ok = window.confirm(
+        'Ban this worker and close the dispute? The worker account will be deactivated and this job will be marked completed.'
+      );
+      if (!ok) return;
+    }
+
     setSubmitting(true);
     setError('');
     setSuccessMessage('');
 
     try {
-      const updated = await resolveDispute(dispute.id, trimmed);
+      const updated = await resolveDispute(dispute.id, trimmed, outcome);
       setDispute(updated);
       setResolutionText(updated?.resolution || trimmed);
-      setSuccessMessage('Dispute resolved successfully.');
+      if (outcome === 'SUSPEND_WORKER') {
+        setSuccessMessage('Dispute closed. Worker account has been banned and the job is marked completed.');
+      } else {
+        setSuccessMessage('Dispute closed. Job has been marked completed.');
+      }
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to resolve dispute.');
     } finally {
@@ -122,18 +147,48 @@ const DisputeDetailsPage = () => {
                 <div className="rounded-card border border-line bg-surface-muted p-4">
                   <p className="ui-stat-label">Job ID</p>
                   <p className="mt-1 text-base font-semibold text-ink">#{dispute.requestId}</p>
+                  <Link
+                    to={`/admin/jobs/${dispute.requestId}`}
+                    className="mt-2 inline-block text-sm font-semibold text-brand-600 hover:underline"
+                  >
+                    Open job in admin
+                  </Link>
+                </div>
+                <div className="rounded-card border border-line bg-surface-muted p-4">
+                  <p className="ui-stat-label">Job status</p>
+                  <p className="mt-1 text-base font-semibold text-ink">
+                    {getJobStatusLabel(dispute)}
+                  </p>
                 </div>
                 <div className="rounded-card border border-line bg-surface-muted p-4">
                   <p className="ui-stat-label">Date Raised</p>
                   <p className="mt-1 text-base font-semibold text-ink">{formatDateTime(dispute.createdAt)}</p>
                 </div>
                 <div className="rounded-card border border-line bg-surface-muted p-4">
-                  <p className="ui-stat-label">Seeker</p>
-                  <p className="mt-1 text-base font-semibold text-ink">{dispute.seekerName || 'Unknown seeker'}</p>
-                </div>
-                <div className="rounded-card border border-line bg-surface-muted p-4">
                   <p className="ui-stat-label">Worker</p>
                   <p className="mt-1 text-base font-semibold text-ink">{dispute.workerName || 'Unknown worker'}</p>
+                </div>
+              </div>
+
+              <div className="rounded-card border border-line bg-white p-4">
+                <p className="ui-stat-label">Contact the raiser (seeker)</p>
+                <p className="mt-1 text-base font-semibold text-ink">{dispute.seekerName || 'Unknown seeker'}</p>
+                <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                  {dispute.seekerPhone ? (
+                    <a
+                      href={`tel:${String(dispute.seekerPhone).replace(/\s+/g, '')}`}
+                      className="ui-button-secondary inline-flex items-center gap-1"
+                    >
+                      Call {dispute.seekerPhone}
+                    </a>
+                  ) : (
+                    <span className="text-ink-muted">No phone on file</span>
+                  )}
+                  {dispute.seekerEmail ? (
+                    <a href={`mailto:${dispute.seekerEmail}`} className="ui-button-ghost">
+                      Email seeker
+                    </a>
+                  ) : null}
                 </div>
               </div>
 
@@ -151,6 +206,12 @@ const DisputeDetailsPage = () => {
               {isResolved(dispute.status) ? (
                 <div className="space-y-3 rounded-card border border-green-200 bg-green-50 p-4">
                   <p className="text-sm font-semibold uppercase tracking-[0.12em] text-green-800">Final Decision (Read Only)</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="ui-stat-label">Outcome</span>
+                    <StatusPill tone={isBanOutcome(dispute.resolveOutcome) ? 'danger' : 'success'}>
+                      {isBanOutcome(dispute.resolveOutcome) ? 'Worker Banned' : 'Completed'}
+                    </StatusPill>
+                  </div>
                   <p className="whitespace-pre-line text-sm leading-7 text-ink-muted">
                     {dispute.resolution || 'No final resolution note recorded.'}
                   </p>
@@ -159,7 +220,7 @@ const DisputeDetailsPage = () => {
                   </p>
                 </div>
               ) : (
-                <form className="space-y-4" onSubmit={handleResolve}>
+                <div className="space-y-4">
                   <div className="ui-field">
                     <label htmlFor="resolution-note" className="ui-label">Final ruling note</label>
                     <textarea
@@ -173,10 +234,29 @@ const DisputeDetailsPage = () => {
                     <p className="ui-helper">This note will be visible to both parties.</p>
                   </div>
 
-                  <button type="submit" className="ui-button-primary" disabled={submitting}>
-                    {submitting ? 'Resolving...' : 'Resolve Dispute'}
-                  </button>
-                </form>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                    <button
+                      type="button"
+                      className="ui-button-primary"
+                      disabled={submitting}
+                      onClick={() => handleResolve('COMPLETE_JOB')}
+                    >
+                      {submitting ? 'Working...' : 'Resolve — mark job completed'}
+                    </button>
+                    <button
+                      type="button"
+                      className="ui-button-secondary border-red-200 text-red-800 hover:bg-red-50"
+                      disabled={submitting}
+                      onClick={() => handleResolve('SUSPEND_WORKER')}
+                    >
+                      {submitting ? 'Working...' : 'Cannot resolve — ban user & close'}
+                    </button>
+                  </div>
+                  <p className="text-xs text-ink-muted">
+                    Use "mark job completed" when parties resolve verbally. Use "ban user" for serious misconduct;
+                    both outcomes close the case and mark the job completed.
+                  </p>
+                </div>
               )}
             </SectionCard>
           </>

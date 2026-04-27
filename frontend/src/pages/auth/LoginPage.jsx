@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { getDefaultRouteForRole, login } from '../../services/authService';
+import { useNavigate, Link, useLocation, Navigate } from 'react-router-dom';
+import { getCurrentUser, getDefaultRouteForRole, isAuthenticated, login } from '../../services/authService';
 import AuthShell from '../../components/ui/AuthShell';
 import ErrorBanner from '../../components/common/ErrorBanner';
+import { getApiErrorMessage, validateEmailFormat } from '../../utils/formValidationMessages';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const sessionExpired = new URLSearchParams(location.search).get('session') === 'expired';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+  const [fieldError, setFieldError] = useState('');
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -21,32 +24,45 @@ const LoginPage = () => {
       [name]: value,
     }));
     setError('');
+    setFieldError('');
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
+    setFieldError('');
 
-    if (!formData.email || !formData.password) {
-      setError('Please enter both email and password');
+    const emailErr = validateEmailFormat(formData.email);
+    if (emailErr) {
+      setFieldError(emailErr);
+      return;
+    }
+    if (!formData.password) {
+      setError('Please enter your password.');
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await login(formData.email, formData.password);
+      const response = await login(formData.email.trim(), formData.password);
       const redirectTo = location.state?.from?.pathname;
       navigate(redirectTo || getDefaultRouteForRole(response.role), { replace: true });
     } catch (err) {
       setError(
-        err.response?.data?.message ||
-        'Invalid email or password. Please try again.'
+        getApiErrorMessage(
+          err,
+          'We could not sign you in. Check your email and password, then try again.',
+        )
       );
     } finally {
       setLoading(false);
     }
   };
+
+  if (isAuthenticated()) {
+    return <Navigate to={getDefaultRouteForRole(getCurrentUser()?.role)} replace />;
+  }
 
   return (
     <AuthShell
@@ -62,9 +78,14 @@ const LoginPage = () => {
       )}
     >
       <div className="space-y-5">
+        {sessionExpired ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+            Your session has expired. Please sign in again to continue.
+          </div>
+        ) : null}
         <ErrorBanner message={error} />
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
           <div className="ui-field">
             <label htmlFor="email" className="ui-label">Email</label>
             <input
@@ -75,8 +96,10 @@ const LoginPage = () => {
               onChange={handleChange}
               placeholder="Enter your email"
               className="ui-input"
-              required
+              autoComplete="email"
+              aria-invalid={fieldError ? 'true' : 'false'}
             />
+            {fieldError ? <p className="ui-error-text">{fieldError}</p> : null}
           </div>
 
           <div className="ui-field">
@@ -89,7 +112,7 @@ const LoginPage = () => {
               onChange={handleChange}
               placeholder="Enter your password"
               className="ui-input"
-              required
+              autoComplete="current-password"
             />
           </div>
 

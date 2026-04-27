@@ -2,7 +2,7 @@
  * quoteService.js — Quotation API Service
  *
  * Centralises all quotation API calls.
- * Used by: SubmitQuotePage, MyQuotesPage (Story 2), CompareQuotesPage (Story 3).
+ * Used by: SubmitQuotePage, MyQuotesPage, RequestDetailsPage.
  */
 
 import apiClient from './apiClient';
@@ -40,8 +40,6 @@ export const withdrawQuote = async (quoteId) => {
     return response.data.data;
 };
 
-// ── Story 3 ─────────────────────────────────────────────────────────────────
-
 /**
  * Get all quotations for a service request (for seeker comparison).
  * @param {number} requestId
@@ -53,20 +51,18 @@ export const getQuotesByRequest = async (requestId) => {
 };
 
 /**
- * Seeker accepts a specific quote.
+ * Accept a quotation as the seeker (assigns worker to request).
  * @param {number} quoteId
- * @param {number} seekerId
  * @returns {Promise<Object>} Updated QuoteResponse
  */
 export const acceptQuote = async (quoteId) => {
-    const response = await apiClient.post(`/quotes/${quoteId}/accept`);
+    const response = await apiClient.patch(`/quotes/${quoteId}/accept`);
     return response.data.data;
 };
 
 /**
- * Seeker rejects a specific quote.
+ * Reject a quotation as the seeker.
  * @param {number} quoteId
- * @param {number} seekerId
  * @returns {Promise<Object>} Updated QuoteResponse
  */
 export const rejectQuote = async (quoteId) => {

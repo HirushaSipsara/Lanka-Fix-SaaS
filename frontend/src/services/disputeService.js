@@ -58,11 +58,15 @@ export const getDisputeByRequest = async (requestId) => {
 
 /**
  * Get all open disputes (admin only).
+ * Backend returns a paged envelope; this unwraps to a plain array (first page only).
  * @returns {Promise<Array>} List of open disputes
  */
 export const getOpenDisputes = async () => {
   const response = await apiClient.get('/disputes/open');
-  return response.data.data;
+  const data = response.data.data;
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.content)) return data.content;
+  return [];
 };
 
 /**
@@ -80,12 +84,27 @@ export const getOpenDisputesPaged = async (params = {}) => {
 };
 
 /**
+ * Get paginated resolved disputes history (admin only).
+ * @param {Object} params - { page, size }
+ * @returns {Promise<Object>} Paged response { content, page, size, totalElements, totalPages, last }
+ */
+export const getResolvedDisputesPaged = async (params = {}) => {
+  const query = new URLSearchParams();
+  if (params.page !== undefined) query.append('page', params.page);
+  if (params.size !== undefined) query.append('size', params.size);
+
+  const response = await apiClient.get(`/disputes/history?${query.toString()}`);
+  return response.data.data;
+};
+
+/**
  * Resolve a dispute (admin only).
  * @param {number} id - Dispute ID
  * @param {string} resolution - Final ruling note
+ * @param {'COMPLETE_JOB'|'SUSPEND_WORKER'} [outcome='COMPLETE_JOB'] - COMPLETE_JOB marks the job completed; SUSPEND_WORKER suspends the worker
  * @returns {Promise<Object>} Resolved dispute details
  */
-export const resolveDispute = async (id, resolution) => {
-  const response = await apiClient.put(`/disputes/${id}/resolve`, { resolution });
+export const resolveDispute = async (id, resolution, outcome = 'COMPLETE_JOB') => {
+  const response = await apiClient.put(`/disputes/${id}/resolve`, { resolution, outcome });
   return response.data.data;
 };

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
+import { getCurrentUser, getDefaultRouteForRole, isAuthenticated } from '../../services/authService';
 import './LandingPage.css';
 
 /* ─── Icon Components (inline SVGs) ─── */
@@ -94,6 +95,11 @@ const stats = [
 
 /* ─── Component ─── */
 const LandingPage = () => {
+    if (isAuthenticated()) {
+        const user = getCurrentUser();
+        return <Navigate to={getDefaultRouteForRole(user?.role)} replace />;
+    }
+
     return (
         <div className="landing" id="landing-page">
             {/* ══════ HERO ══════ */}
@@ -104,21 +110,21 @@ const LandingPage = () => {
                 </div>
 
                 <div className="hero__content container">
-                    <span className="section-label">🇱🇰 Sri Lanka's #1 Service Marketplace</span>
                     <h1 className="hero__title">
                         Find Trusted Local
                         <br />
                         <span className="hero__title-accent">Workers Near You</span>
                     </h1>
                     <p className="hero__subtitle">
-                        From plumbing to painting — connect with verified, skilled professionals
-                        across Sri Lanka. Get quotes, compare prices, and hire with confidence.
+                        Sri Lanka's trusted service marketplace — from plumbing to painting,
+                        connect with verified local professionals, compare quotes, and hire
+                        with confidence.
                     </p>
                     <div className="hero__actions">
-                        <Link to="/create-request" className="btn btn-lg btn-accent">
+                        <Link to="/register" className="btn btn-lg btn-accent">
                             Post a Request <Icons.ArrowRight />
                         </Link>
-                        <Link to="/browse-requests" className="btn btn-lg btn-white">
+                        <Link to="/register" className="btn btn-lg btn-white">
                             Find Work
                         </Link>
                     </div>
@@ -218,7 +224,7 @@ const LandingPage = () => {
                                 <li>✓ Secure payments after every job</li>
                                 <li>✓ Build your reputation with reviews</li>
                             </ul>
-                            <Link to="/create-profile" className="btn btn-lg btn-accent">
+                            <Link to="/register" className="btn btn-lg btn-accent">
                                 Sign Up as Tasker <Icons.ArrowRight />
                             </Link>
                         </div>
@@ -247,10 +253,10 @@ const LandingPage = () => {
                                 with reliable local taskers. Sign up free today.
                             </p>
                             <div className="cta__actions">
-                                <Link to="/create-request" className="btn btn-lg btn-accent">
+                                <Link to="/register" className="btn btn-lg btn-accent">
                                     Post a Request <Icons.ArrowRight />
                                 </Link>
-                                <Link to="/create-profile" className="btn btn-lg btn-secondary" style={{ borderColor: 'rgba(255,255,255,0.4)', color: 'var(--white)' }}>
+                                <Link to="/register" className="btn btn-lg btn-secondary" style={{ borderColor: 'rgba(255,255,255,0.4)', color: 'var(--white)' }}>
                                     Join as Tasker
                                 </Link>
                             </div>

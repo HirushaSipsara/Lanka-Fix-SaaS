@@ -2,7 +2,9 @@ package lk.wedalk.disputes.controller;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import lk.wedalk.common.enums.DisputeResolveOutcome;
 import lk.wedalk.common.ApiResponse;
 import lk.wedalk.common.PagedResponse;
 import lk.wedalk.common.exceptions.NotFoundException;
@@ -128,6 +130,22 @@ public class DisputeController {
     }
 
     /**
+     * GET /api/disputes/history — Get resolved disputes history (admin).
+     */
+    @GetMapping("/history")
+    public ResponseEntity<ApiResponse<PagedResponse<DisputeResponse>>> getResolvedDisputeHistory(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        AuthenticatedUser currentUser = requireAuthenticatedUser();
+        if (currentUser.role() != Role.ADMIN) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only admins can view dispute history");
+        }
+
+        PagedResponse<DisputeResponse> disputes = disputeService.getResolvedDisputesPaged(page, size);
+        return ResponseEntity.ok(ApiResponse.success(disputes, "Dispute history retrieved successfully"));
+    }
+
+    /**
      * GET /api/disputes/my — Get current user's disputes (seeker view).
      */
     @GetMapping("/my")
@@ -167,7 +185,19 @@ public class DisputeController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "resolution is required");
         }
 
-        DisputeResponse response = disputeService.resolveDispute(id, currentUser.userId(), resolution.trim());
+        DisputeResolveOutcome outcome = DisputeResolveOutcome.COMPLETE_JOB;
+        String outcomeRaw = requestBody == null ? null : asString(requestBody.get("outcome"));
+        if (outcomeRaw != null && !outcomeRaw.isBlank()) {
+            try {
+                outcome = DisputeResolveOutcome.valueOf(outcomeRaw.trim().toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException ex) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "outcome must be COMPLETE_JOB or SUSPEND_WORKER");
+            }
+        }
+
+        DisputeResponse response =
+                disputeService.resolveDispute(id, currentUser.userId(), resolution.trim(), outcome);
         return ResponseEntity.ok(ApiResponse.success(response, "Dispute resolved successfully"));
     }
 

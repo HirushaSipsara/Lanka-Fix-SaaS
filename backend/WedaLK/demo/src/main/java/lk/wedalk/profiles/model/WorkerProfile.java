@@ -11,6 +11,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import lk.wedalk.common.enums.WorkerRegistrationPaymentStatus;
 
 @Entity
 @Table(name = "worker_profiles")
@@ -49,6 +50,18 @@ public class WorkerProfile {
     private double hourlyRate;
 
     private String availability;
+
+    @Column(length = 500)
+    private String paymentSlipPath;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    @Builder.Default
+    private WorkerRegistrationPaymentStatus registrationPaymentStatus =
+            WorkerRegistrationPaymentStatus.APPROVED;
+
+    @Column(columnDefinition = "TEXT")
+    private String paymentRejectionNote;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
