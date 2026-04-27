@@ -15,8 +15,6 @@ import lk.wedalk.users.model.Role;
 import lk.wedalk.users.model.User;
 import lk.wedalk.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -41,8 +39,6 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:3000")
 public class DisputeController {
-
-    private static final Logger log = LoggerFactory.getLogger(DisputeController.class);
 
     private final DisputeService disputeService;
     private final UserRepository userRepository;
@@ -90,10 +86,7 @@ public class DisputeController {
     @PostMapping
     public ResponseEntity<ApiResponse<DisputeResponse>> createDispute(
             @Valid @RequestBody DisputeCreateRequest request) {
-        Long userId = requireCurrentUserId();
-        log.info("Creating dispute: userId={}, requestId={}", userId, request.getRequestId());
-        DisputeResponse response = disputeService.createDispute(userId, request);
-        log.info("Dispute created: disputeId={}", response.getId());
+        DisputeResponse response = disputeService.createDispute(requireCurrentUserId(), request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "Dispute created successfully"));
     }
@@ -190,7 +183,6 @@ public class DisputeController {
 
         DisputeResponse response =
                 disputeService.resolveDispute(id, currentUser.userId(), resolution.trim(), outcome);
-        log.info("Dispute resolved: disputeId={}, outcome={}", id, outcome);
         return ResponseEntity.ok(ApiResponse.success(response, "Dispute resolved successfully"));
     }
 

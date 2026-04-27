@@ -9,8 +9,6 @@ import lk.wedalk.profiles.service.WorkerProfileService;
 import lk.wedalk.users.model.User;
 import lk.wedalk.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,8 +22,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:3000") // Allow frontend
 public class WorkerProfileController {
-
-    private static final Logger log = LoggerFactory.getLogger(WorkerProfileController.class);
 
     private final WorkerProfileService workerProfileService;
     private final UserRepository userRepository;
@@ -58,10 +54,7 @@ public class WorkerProfileController {
 
     @PostMapping
     public ResponseEntity<WorkerProfileResponse> createProfile(@Valid @RequestBody WorkerProfileCreateRequest request) {
-        Long userId = requireCurrentUserId();
-        log.info("Creating worker profile: userId={}", userId);
-        WorkerProfileResponse response = workerProfileService.createProfile(userId, request);
-        log.info("Worker profile created: profileId={}", response.getId());
+        WorkerProfileResponse response = workerProfileService.createProfile(requireCurrentUserId(), request);
         return ResponseEntity.ok(response);
     }
 
@@ -78,15 +71,12 @@ public class WorkerProfileController {
     @PutMapping("/{id}")
     public ResponseEntity<WorkerProfileResponse> updateProfile(@PathVariable Long id,
             @Valid @RequestBody lk.wedalk.profiles.dto.WorkerProfileUpdateRequest request) {
-        log.info("Updating worker profile: profileId={}", id);
         return ResponseEntity.ok(workerProfileService.updateProfile(id, requireCurrentUserId(), request));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteProfile(@PathVariable Long id) {
-        log.info("Deleting worker profile: profileId={}", id);
         workerProfileService.deleteProfile(id, requireCurrentUserId());
-        log.info("Worker profile deleted: profileId={}", id);
         return ResponseEntity.ok(ApiResponse.success(null, "Worker profile deleted successfully"));
     }
 }

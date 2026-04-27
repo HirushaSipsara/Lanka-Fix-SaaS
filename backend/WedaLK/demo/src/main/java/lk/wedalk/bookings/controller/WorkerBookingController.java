@@ -9,8 +9,6 @@ import lk.wedalk.common.ApiResponse;
 import lk.wedalk.common.exceptions.NotFoundException;
 import lk.wedalk.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,8 +24,6 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "http://localhost:3000")
 public class WorkerBookingController {
 
-  private static final Logger log = LoggerFactory.getLogger(WorkerBookingController.class);
-
   private final WorkerBookingService bookingService;
   private final UserRepository userRepository;
 
@@ -40,10 +36,7 @@ public class WorkerBookingController {
 
   @PostMapping
   public ResponseEntity<ApiResponse<BookingResponse>> create(@Valid @RequestBody BookingCreateRequest request) {
-    Long userId = requireCurrentUserId();
-    log.info("Creating booking: seekerId={}, workerProfileId={}", userId, request.getWorkerProfileId());
-    BookingResponse res = bookingService.createBooking(userId, request);
-    log.info("Booking created: bookingId={}", res.getId());
+    BookingResponse res = bookingService.createBooking(requireCurrentUserId(), request);
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success(res, "Booking request sent. The worker will confirm based on their schedule."));
   }
@@ -62,23 +55,19 @@ public class WorkerBookingController {
 
   @PatchMapping("/{id}/accept")
   public ResponseEntity<ApiResponse<BookingResponse>> accept(@PathVariable Long id) {
-    log.info("Accepting booking: bookingId={}", id);
     BookingResponse res = bookingService.acceptBooking(requireCurrentUserId(), id);
     return ResponseEntity.ok(ApiResponse.success(res, "Booking accepted."));
   }
 
   @PatchMapping("/{id}/reject")
   public ResponseEntity<ApiResponse<BookingResponse>> reject(@PathVariable Long id) {
-    log.info("Rejecting booking: bookingId={}", id);
     BookingResponse res = bookingService.rejectBooking(requireCurrentUserId(), id);
     return ResponseEntity.ok(ApiResponse.success(res, "Booking rejected."));
   }
 
   @DeleteMapping("/{id}")
   public ResponseEntity<ApiResponse<Void>> cancel(@PathVariable Long id) {
-    log.info("Cancelling booking: bookingId={}", id);
     bookingService.cancelBySeeker(requireCurrentUserId(), id);
-    log.info("Booking cancelled: bookingId={}", id);
     return ResponseEntity.ok(ApiResponse.success(null, "Booking cancelled."));
   }
 }
