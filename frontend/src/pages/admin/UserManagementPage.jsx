@@ -8,6 +8,7 @@ import {
   StatusPill,
 } from '../../components/ui/PortalPrimitives';
 import { getAllUsers, toggleUserStatus } from '../../services/adminService';
+import { getApiErrorMessage } from '../../utils/formValidationMessages';
 import { getUser } from '../../utils/storage';
 
 const roleOptions = [
@@ -48,6 +49,7 @@ const getDisplayRole = (role) => {
 const UserManagementPage = () => {
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [role, setRole] = useState('');
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
@@ -59,13 +61,20 @@ const UserManagementPage = () => {
   // Current admin's own ID, so we can prevent self-suspension in the UI
   const currentAdminId = useRef(getUser()?.id ?? null);
 
+  useEffect(() => {
+    const debounceHandle = window.setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => window.clearTimeout(debounceHandle);
+  }, [search]);
+
   const filters = useMemo(
     () => ({
-      search: search.trim(),
+      search: debouncedSearch.trim(),
       role,
       status,
     }),
-    [search, role, status],
+    [debouncedSearch, role, status],
   );
 
   const loadUsers = useCallback(async () => {
@@ -76,7 +85,7 @@ const UserManagementPage = () => {
       const data = await getAllUsers(filters);
       setUsers(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to load platform users.');
+      setError(getApiErrorMessage(err, 'Failed to load platform users.'));
       setUsers([]);
     } finally {
       setLoading(false);
@@ -100,7 +109,7 @@ const UserManagementPage = () => {
       );
     } catch (err) {
       setError(
-        err?.response?.data?.message || 'Failed to update account status. Please try again.',
+        getApiErrorMessage(err, 'Failed to update account status. Please try again.'),
       );
     } finally {
       setActionLoading((prev) => {
@@ -187,6 +196,13 @@ const UserManagementPage = () => {
           </div>
 
           <ErrorBanner message={error} onClose={() => setError('')} />
+          {!loading && error ? (
+            <div>
+              <button type="button" className="ui-button-secondary" onClick={loadUsers}>
+                Retry loading users
+              </button>
+            </div>
+          ) : null}
 
           {loading ? <LoadingPanel message="Loading registered users..." /> : null}
 
