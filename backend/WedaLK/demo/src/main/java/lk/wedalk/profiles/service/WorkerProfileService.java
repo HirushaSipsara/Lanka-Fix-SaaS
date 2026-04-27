@@ -89,6 +89,7 @@ public class WorkerProfileService {
         return mapToResponse(savedProfile);
     }
 
+    @Transactional(readOnly = true)
     public List<WorkerProfileResponse> getAllProfiles() {
         return workerProfileRepository.findAll()
                 .stream()

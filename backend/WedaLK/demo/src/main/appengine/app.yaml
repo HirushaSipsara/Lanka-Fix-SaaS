@@ -1,0 +1,53 @@
+runtime: java
+env: flex
+
+runtime_config:
+  operating_system: "ubuntu22"
+  runtime_version: "17"
+
+handlers:
+  - url: /.*
+    script: auto
+
+# Health check so App Engine knows the instance is alive
+# Increased timeouts to give Spring Boot enough time to start
+liveness_check:
+  path: "/api/health"
+  check_interval_sec: 30
+  timeout_sec: 15
+  failure_threshold: 5
+  success_threshold: 2
+  initial_delay_sec: 120
+
+readiness_check:
+  path: "/api/health"
+  check_interval_sec: 15
+  timeout_sec: 10
+  failure_threshold: 5
+  success_threshold: 2
+  app_start_timeout_sec: 300
+
+env_variables:
+  # JVM memory tuning — critical for 1GB instance
+  JAVA_TOOL_OPTIONS: "-Xmx512m -Xms256m -XX:+UseG1GC -XX:MaxMetaspaceSize=128m -XX:+UseStringDeduplication"
+  SPRING_DATASOURCE_URL: 
+  SPRING_DATASOURCE_USERNAME: "neondb_owner"
+  SPRING_DATASOURCE_PASSWORD: "npg_6OeVzvqXb4Dp"
+  SPRING_DATASOURCE_MAX_POOL_SIZE: "3"
+  SPRING_DATASOURCE_MIN_IDLE: "1"
+  SPRING_DATASOURCE_CONNECTION_TIMEOUT_MS: "20000"
+  SPRING_DATASOURCE_IDLE_TIMEOUT_MS: "60000"
+  SPRING_DATASOURCE_MAX_LIFETIME_MS: "300000"
+  SPRING_JPA_DDL_AUTO: "update"
+  SPRING_JPA_SHOW_SQL: "false"
+  JWT_SECRET: "Zc1bz91/EDAZmQ0ilZTXY5PAeSjXji3G16rhDyGLw0g="
+  CORS_ALLOWED_ORIGINS: 
+
+# Single instance to minimize billing
+manual_scaling:
+  instances: 1
+
+resources:
+  cpu: 1
+  memory_gb: 1
+  disk_size_gb: 10

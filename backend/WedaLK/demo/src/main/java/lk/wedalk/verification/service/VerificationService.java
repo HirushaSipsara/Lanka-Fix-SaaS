@@ -26,6 +26,7 @@ import lk.wedalk.verification.repository.VerificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -46,6 +47,7 @@ public class VerificationService {
     @Value("${app.upload.dir:./uploads}")
     private String uploadDir;
 
+    @Transactional
     public VerificationSubmitResponse submitVerification(Long workerId, MultipartFile document) {
         User worker = userRepository.findById(workerId)
                 .orElseThrow(() -> new NotFoundException("Worker not found"));
@@ -85,6 +87,7 @@ public class VerificationService {
      * Returns the current worker's most recent verification submission,
      * or a "NONE" response if no submission exists yet.
      */
+    @Transactional(readOnly = true)
     public VerificationStatusResponse getMyVerification(Long workerId) {
         Optional<VerificationSubmission> optional = verificationRepository.findByWorkerId(workerId);
 
@@ -102,6 +105,7 @@ public class VerificationService {
      * Returns all submissions that are currently in PENDING status, ordered
      * oldest-first so admins process them in order of arrival.
      */
+    @Transactional(readOnly = true)
     public List<VerificationStatusResponse> getPendingSubmissions() {
         return verificationRepository
                 .findByStatusOrderBySubmittedAtAsc(VerificationStatus.PENDING)
@@ -110,6 +114,7 @@ public class VerificationService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public StoredDocument getSubmissionDocument(Long submissionId) {
         VerificationSubmission submission = verificationRepository.findById(submissionId)
                 .orElseThrow(() -> new NotFoundException("Verification submission not found"));
@@ -127,6 +132,7 @@ public class VerificationService {
         return new StoredDocument(path, submission.getDocumentName(), submission.getDocumentContentType());
     }
 
+    @Transactional
     public void reviewVerification(Long submissionId, Long adminId, String status, String adminNotes) {
         VerificationSubmission submission = verificationRepository.findById(submissionId)
                 .orElseThrow(() -> new NotFoundException("Verification submission not found"));

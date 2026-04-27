@@ -32,7 +32,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/requests")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000") // Allow frontend access
 public class ServiceRequestController {
 
   private final ServiceRequestService serviceRequestService;
