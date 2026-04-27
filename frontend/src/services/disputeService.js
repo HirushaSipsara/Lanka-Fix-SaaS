@@ -84,6 +84,20 @@ export const getOpenDisputesPaged = async (params = {}) => {
 };
 
 /**
+ * Get paginated resolved disputes history (admin only).
+ * @param {Object} params - { page, size }
+ * @returns {Promise<Object>} Paged response { content, page, size, totalElements, totalPages, last }
+ */
+export const getResolvedDisputesPaged = async (params = {}) => {
+  const query = new URLSearchParams();
+  if (params.page !== undefined) query.append('page', params.page);
+  if (params.size !== undefined) query.append('size', params.size);
+
+  const response = await apiClient.get(`/disputes/history?${query.toString()}`);
+  return response.data.data;
+};
+
+/**
  * Resolve a dispute (admin only).
  * @param {number} id - Dispute ID
  * @param {string} resolution - Final ruling note

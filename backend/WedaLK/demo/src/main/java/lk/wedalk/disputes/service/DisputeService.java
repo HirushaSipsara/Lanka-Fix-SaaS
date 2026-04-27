@@ -153,6 +153,28 @@ public class DisputeService {
     }
 
     @Transactional(readOnly = true)
+    public PagedResponse<DisputeResponse> getResolvedDisputesPaged(int page, int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.max(size, 1);
+
+        PageRequest pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "resolvedAt"));
+        Page<Dispute> disputes = disputeRepository.findByStatus(DisputeStatus.RESOLVED, pageable);
+
+        List<DisputeResponse> content = disputes.getContent().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+
+        return PagedResponse.<DisputeResponse>builder()
+                .content(content)
+                .page(disputes.getNumber())
+                .size(disputes.getSize())
+                .totalElements(disputes.getTotalElements())
+                .totalPages(disputes.getTotalPages())
+                .last(disputes.isLast())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
     public DisputeResponse getDisputeById(Long id) {
         Dispute dispute = disputeRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Dispute not found"));

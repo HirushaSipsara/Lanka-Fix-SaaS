@@ -131,6 +131,22 @@ public class DisputeController {
     }
 
     /**
+     * GET /api/disputes/history — Get resolved disputes history (admin).
+     */
+    @GetMapping("/history")
+    public ResponseEntity<ApiResponse<PagedResponse<DisputeResponse>>> getResolvedDisputeHistory(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        AuthenticatedUser currentUser = requireAuthenticatedUser();
+        if (currentUser.role() != Role.ADMIN) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only admins can view dispute history");
+        }
+
+        PagedResponse<DisputeResponse> disputes = disputeService.getResolvedDisputesPaged(page, size);
+        return ResponseEntity.ok(ApiResponse.success(disputes, "Dispute history retrieved successfully"));
+    }
+
+    /**
      * GET /api/disputes/my — Get current user's disputes (seeker view).
      */
     @GetMapping("/my")
