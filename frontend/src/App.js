@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
 import { ToastProvider } from './components/common/ToastContext';
 
 import MainLayout from './layouts/MainLayout';
@@ -16,7 +16,8 @@ const CreateRequestPage = lazy(() => import('./pages/seeker/CreateRequestPage'))
 const MyRequestsPage = lazy(() => import('./pages/seeker/MyRequestsPage'));
 const RequestDetailsPage = lazy(() => import('./pages/seeker/RequestDetailsPage'));
 const BrowseWorkersPage = lazy(() => import('./pages/seeker/BrowseWorkersPage'));
-const CompareQuotesPage = lazy(() => import('./pages/seeker/CompareQuotesPage'));
+const BookWorkerPage = lazy(() => import('./pages/seeker/BookWorkerPage'));
+const MyBookingsPage = lazy(() => import('./pages/seeker/MyBookingsPage'));
 const MyReviewsPage = lazy(() => import('./pages/seeker/MyReviewsPage'));
 const WorkerDashboard = lazy(() => import('./pages/worker/WorkerDashboard'));
 const BrowseRequestsPage = lazy(() => import('./pages/worker/BrowseRequestsPage'));
@@ -25,6 +26,7 @@ const SubmitQuotePage = lazy(() => import('./pages/worker/SubmitQuotePage'));
 const MyQuotationsPage = lazy(() => import('./pages/worker/MyQuotationsPage'));
 const MyJobsPage = lazy(() => import('./pages/worker/MyJobsPage'));
 const VerificationPage = lazy(() => import('./pages/worker/VerificationPage'));
+const WorkerBookingsPage = lazy(() => import('./pages/worker/WorkerBookingsPage'));
 const EditWorkerProfilePage = lazy(() => import('./pages/worker/EditWorkerProfilePage'));
 const WorkerProfilePage = lazy(() => import('./pages/worker/WorkerProfilePage'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
@@ -34,7 +36,6 @@ const DisputeReviewPage = lazy(() => import('./pages/admin/DisputeReviewPage'));
 const AdminJobDetailsPage = lazy(() => import('./pages/admin/AdminJobDetailsPage'));
 const AdminPaymentSlipsPage = lazy(() => import('./pages/admin/AdminPaymentSlipsPage'));
 const UserManagementPage = lazy(() => import('./pages/admin/UserManagementPage'));
-const TrustWorkflowPage = lazy(() => import('./pages/admin/TrustWorkflowPage'));
 const AccountProfilePage = lazy(() => import('./pages/account/AccountProfilePage'));
 
 const RouteFallback = (
@@ -67,11 +68,9 @@ function App() {
                 <Route path="/create-request" element={<CreateRequestPage />} />
                 <Route path="/my-requests" element={<MyRequestsPage />} />
                 <Route path="/my-requests/:requestId" element={<RequestDetailsPage />} />
-                <Route
-                  path="/my-requests/:requestId/quotations"
-                  element={<CompareQuotesPage />}
-                />
                 <Route path="/browse-workers" element={<BrowseWorkersPage />} />
+                <Route path="/book-worker/:profileId" element={<BookWorkerPage />} />
+                <Route path="/my-bookings" element={<MyBookingsPage />} />
                 <Route path="/my-reviews" element={<MyReviewsPage />} />
               </Route>
 
@@ -83,6 +82,7 @@ function App() {
                 <Route path="/edit-profile/:id" element={<EditWorkerProfilePage />} />
                 <Route path="/profile/:id" element={<WorkerProfilePage />} />
                 <Route path="/worker/verification" element={<VerificationPage />} />
+                <Route path="/worker/bookings" element={<WorkerBookingsPage />} />
 
                 <Route element={<RequireWorkerProfile />}>
                   <Route path="/requests/:requestId/quote" element={<SubmitQuotePage />} />
@@ -93,7 +93,7 @@ function App() {
 
               <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
-                <Route path="/admin/trust-workflow" element={<TrustWorkflowPage />} />
+                <Route path="/admin/trust-workflow" element={<Navigate to="/admin/disputes" replace />} />
                 <Route path="/admin/disputes" element={<DisputeReviewPage />} />
                 <Route path="/admin/disputes/:disputeId" element={<DisputeDetailsPage />} />
                 <Route path="/admin/verification" element={<VerificationReviewPage />} />

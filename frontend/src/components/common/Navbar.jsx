@@ -156,15 +156,11 @@ const Navbar = ({ variant = 'landing' }) => {
                 {role === 'ADMIN' ? <NavLink to="/admin/disputes" className={navLinkClass}>Disputes</NavLink> : null}
                 {role === 'WORKER' ? <NavLink to="/browse-requests" className={navLinkClass}>Find Work</NavLink> : null}
                 {role === 'SEEKER' ? <NavLink to="/browse-workers" className={navLinkClass}>Browse Workers</NavLink> : null}
+                {role === 'SEEKER' ? <NavLink to="/my-bookings" className={navLinkClass}>My Bookings</NavLink> : null}
                 {role === 'WORKER' ? <NavLink to="/my-quotations" className={navLinkClass}>My Quotations</NavLink> : null}
+                {role === 'WORKER' ? <NavLink to="/worker/bookings" className={navLinkClass}>Bookings</NavLink> : null}
                 {role === 'SEEKER' ? <NavLink to="/my-requests" className={navLinkClass}>My Requests</NavLink> : null}
                 <div className="ml-3 flex items-center gap-3">
-                  <button
-                    type="button"
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition hover:bg-white/20"
-                  >
-                    <span role="img" aria-label="Notifications">🔔</span>
-                  </button>
                   <Link
                     to="/account/profile"
                     title={displayName}
@@ -241,7 +237,9 @@ const Navbar = ({ variant = 'landing' }) => {
                 {role === 'ADMIN' ? <NavLink to="/admin/disputes" className={mobilePortalNavLinkClass} onClick={closeMobile}>Disputes</NavLink> : null}
                 {role === 'WORKER' ? <NavLink to="/browse-requests" className={mobilePortalNavLinkClass} onClick={closeMobile}>Find Work</NavLink> : null}
                 {role === 'SEEKER' ? <NavLink to="/browse-workers" className={mobilePortalNavLinkClass} onClick={closeMobile}>Browse Workers</NavLink> : null}
+                {role === 'SEEKER' ? <NavLink to="/my-bookings" className={mobilePortalNavLinkClass} onClick={closeMobile}>My Bookings</NavLink> : null}
                 {role === 'WORKER' ? <NavLink to="/my-quotations" className={mobilePortalNavLinkClass} onClick={closeMobile}>My Quotations</NavLink> : null}
+                {role === 'WORKER' ? <NavLink to="/worker/bookings" className={mobilePortalNavLinkClass} onClick={closeMobile}>Bookings</NavLink> : null}
                 {role === 'SEEKER' ? <NavLink to="/my-requests" className={mobilePortalNavLinkClass} onClick={closeMobile}>My Requests</NavLink> : null}
               </>
             )}

@@ -6,6 +6,7 @@ import {
   WorkerProfilePanel,
   WorkerProfileSkeleton,
 } from '../../components/ui/WorkerProfilePanel';
+import { getCurrentUser } from '../../services/authService';
 import { getProfileById } from '../../services/profileService';
 import { getReviewsForWorker } from '../../services/reviewService';
 
@@ -50,6 +51,17 @@ const PublicWorkerProfilePage = () => {
     navigate('/browse-workers');
   };
 
+  const handleBookWorker = () => {
+    const user = getCurrentUser();
+    if (!user) {
+      navigate('/login', { state: { from: { pathname: `/book-worker/${id}` } } });
+      return;
+    }
+    if (user.role === 'SEEKER') {
+      navigate(`/book-worker/${id}`);
+    }
+  };
+
   if (loading) return <WorkerProfileSkeleton />;
 
   if (error) {
@@ -63,6 +75,9 @@ const PublicWorkerProfilePage = () => {
 
   if (!profile) return null;
 
+  const user = getCurrentUser();
+  const showBookCta = !user || user.role === 'SEEKER';
+
   return (
     <WorkerProfilePanel
       profile={profile}
@@ -70,12 +85,12 @@ const PublicWorkerProfilePage = () => {
       backLink={<button onClick={handleBack} className="ui-link text-white" type="button"><span className="material-icons text-base">arrow_back</span>Back</button>}
       actions={(
         <>
-          <button className="ui-button-primary" type="button">Invite to Job</button>
+          {showBookCta ? (
+            <button className="ui-button-primary" type="button" onClick={handleBookWorker}>
+              Book worker
+            </button>
+          ) : null}
           <button className="ui-button-secondary" onClick={handleBack} type="button">Back</button>
-          <button className="ui-button-ghost" type="button">
-            <span className="material-icons text-base">share</span>
-            Share
-          </button>
         </>
       )}
     />

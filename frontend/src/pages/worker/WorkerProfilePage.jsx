@@ -49,7 +49,7 @@ const WorkerProfilePage = () => {
     return (
       <WorkerProfileError
         message={error}
-        action={<WorkerProfileBackButton to="/browse-workers" label="Back to Workers" />}
+        action={<WorkerProfileBackButton to="/worker/dashboard" label="Back to Dashboard" />}
       />
     );
   }
@@ -137,10 +137,6 @@ const WorkerProfilePage = () => {
           <button className="ui-button-secondary w-full sm:w-auto" type="button" onClick={() => navigate(`/edit-profile/${profile.id}`)}>
             <span className="material-icons text-base">edit</span>
             Edit Profile
-          </button>
-          <button className="ui-button-ghost w-full sm:w-auto" type="button">
-            <span className="material-icons text-base">share</span>
-            Share
           </button>
         </>
       )}
