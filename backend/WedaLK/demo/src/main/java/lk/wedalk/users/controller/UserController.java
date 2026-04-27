@@ -6,6 +6,8 @@ import lk.wedalk.users.dto.UpdateMeRequest;
 import lk.wedalk.users.dto.UserDto;
 import lk.wedalk.users.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -22,10 +24,13 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = "http://localhost:3000")
 public class UserController {
 
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
+
     private final UserService userService;
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserDto>> getMe(Authentication authentication) {
+        log.debug("Fetching current user profile: email='{}'", authentication.getName());
         UserDto user = userService.getCurrentUserByEmail(authentication.getName());
         return ResponseEntity.ok(ApiResponse.success(user, "Current user retrieved successfully"));
     }
@@ -34,13 +39,17 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserDto>> updateMe(
             Authentication authentication,
             @Valid @RequestBody UpdateMeRequest request) {
+        log.info("Updating user profile: email='{}'", authentication.getName());
         UserDto updated = userService.updateCurrentUserByEmail(authentication.getName(), request);
+        log.info("User profile updated: email='{}'", authentication.getName());
         return ResponseEntity.ok(ApiResponse.success(updated, "Profile updated successfully"));
     }
 
     @DeleteMapping("/me")
     public ResponseEntity<ApiResponse<Void>> deleteMe(Authentication authentication) {
+        log.info("Deleting user account: email='{}'", authentication.getName());
         userService.deleteCurrentUserByEmail(authentication.getName());
+        log.info("User account deleted: email='{}'", authentication.getName());
         return ResponseEntity.ok(ApiResponse.success(null, "Account deleted successfully"));
     }
 }

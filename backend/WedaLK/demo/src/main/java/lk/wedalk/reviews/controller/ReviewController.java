@@ -10,6 +10,8 @@ import lk.wedalk.reviews.dto.WorkerReviewResponse;
 import lk.wedalk.reviews.service.ReviewService;
 import lk.wedalk.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -33,6 +35,8 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "http://localhost:3000")
 public class ReviewController {
 
+    private static final Logger log = LoggerFactory.getLogger(ReviewController.class);
+
     private final ReviewService reviewService;
     private final UserRepository userRepository;
 
@@ -55,7 +59,10 @@ public class ReviewController {
     @PostMapping
     public ResponseEntity<ApiResponse<ReviewResponse>> createReview(
             @Valid @RequestBody ReviewCreateRequest request) {
-        ReviewResponse response = reviewService.createReview(requireCurrentUserId(), request);
+        Long userId = requireCurrentUserId();
+        log.info("Creating review: userId={}, requestId={}", userId, request.getRequestId());
+        ReviewResponse response = reviewService.createReview(userId, request);
+        log.info("Review created: reviewId={}", response.getId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "Review submitted successfully"));
     }
@@ -66,6 +73,7 @@ public class ReviewController {
     @GetMapping("/worker/{workerId}")
     public ResponseEntity<ApiResponse<List<WorkerReviewResponse>>> getReviewsForWorker(
             @PathVariable Long workerId) {
+        log.debug("Fetching reviews for workerId={}", workerId);
         List<WorkerReviewResponse> reviews = reviewService.getReviewsForWorker(workerId);
         return ResponseEntity.ok(ApiResponse.success(reviews, "Reviews retrieved successfully"));
     }

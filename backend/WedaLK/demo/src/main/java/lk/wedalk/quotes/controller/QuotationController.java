@@ -8,6 +8,8 @@ import lk.wedalk.quotes.dto.QuoteResponse;
 import lk.wedalk.quotes.service.QuotationService;
 import lk.wedalk.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -41,6 +43,8 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:3000")
 public class QuotationController {
 
+    private static final Logger log = LoggerFactory.getLogger(QuotationController.class);
+
     private final QuotationService quotationService;
     private final UserRepository userRepository;
 
@@ -61,7 +65,10 @@ public class QuotationController {
     public ResponseEntity<ApiResponse<QuoteResponse>> submitQuote(
             @Valid @RequestBody QuoteCreateRequest request) {
 
-        QuoteResponse response = quotationService.createQuote(requireCurrentUserId(), request);
+        Long userId = requireCurrentUserId();
+        log.info("Submitting quote: userId={}, requestId={}", userId, request.getRequestId());
+        QuoteResponse response = quotationService.createQuote(userId, request);
+        log.info("Quote submitted: quoteId={}", response.getId());
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "Quotation submitted successfully!"));
@@ -81,7 +88,9 @@ public class QuotationController {
     @DeleteMapping("/{quoteId}")
     public ResponseEntity<ApiResponse<QuoteResponse>> withdrawQuote(@PathVariable Long quoteId) {
 
+        log.info("Withdrawing quote: quoteId={}", quoteId);
         QuoteResponse response = quotationService.withdrawQuote(quoteId, requireCurrentUserId());
+        log.info("Quote withdrawn: quoteId={}", quoteId);
         return ResponseEntity.ok(ApiResponse.success(response, "Quotation withdrawn successfully"));
     }
 
@@ -103,7 +112,9 @@ public class QuotationController {
             @PathVariable Long quoteId) {
 
         Long seekerId = requireCurrentUserId();
+        log.info("Accepting quote: quoteId={}, seekerId={}", quoteId, seekerId);
         QuoteResponse response = quotationService.acceptQuote(quoteId, seekerId);
+        log.info("Quote accepted: quoteId={}", quoteId);
         return ResponseEntity.ok(ApiResponse.success(response, "Quote accepted successfully"));
     }
 
@@ -112,6 +123,7 @@ public class QuotationController {
             @PathVariable Long quoteId) {
 
         Long seekerId = requireCurrentUserId();
+        log.info("Rejecting quote: quoteId={}, seekerId={}", quoteId, seekerId);
         QuoteResponse response = quotationService.rejectQuote(quoteId, seekerId);
         return ResponseEntity.ok(ApiResponse.success(response, "Quote rejected"));
     }

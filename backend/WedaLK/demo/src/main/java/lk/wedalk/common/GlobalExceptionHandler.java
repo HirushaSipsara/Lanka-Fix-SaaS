@@ -51,31 +51,37 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ApiResponse.ErrorResponse> handleNotFound(NotFoundException ex) {
+        log.warn("NotFoundException: {}", ex.getMessage());
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiResponse.ErrorResponse> handleBadRequest(BadRequestException ex) {
+        log.warn("BadRequestException: {}", ex.getMessage());
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
   @ExceptionHandler(UnauthorizedException.class)
   public ResponseEntity<ApiResponse.ErrorResponse> handleUnauthorized(UnauthorizedException ex) {
+        log.warn("UnauthorizedException: {}", ex.getMessage());
         return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ApiResponse.ErrorResponse> handleConflict(ConflictException ex) {
+        log.warn("ConflictException: {}", ex.getMessage());
         return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     @ExceptionHandler(ServiceUnavailableException.class)
     public ResponseEntity<ApiResponse.ErrorResponse> handleServiceUnavailable(ServiceUnavailableException ex) {
+        log.error("ServiceUnavailableException: {}", ex.getMessage());
         return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
     }
 
     @ExceptionHandler(AiGenerationException.class)
     public ResponseEntity<ApiResponse.ErrorResponse> handleAiGeneration(AiGenerationException ex) {
+        log.error("AiGenerationException: {}", ex.getMessage());
         return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
     }
 
@@ -83,6 +89,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse.ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+        log.warn("AccessDeniedException: {}", ex.getMessage());
         return buildResponse(
                 HttpStatus.FORBIDDEN,
                 "You do not have permission to perform this action.");
@@ -107,6 +114,7 @@ public class GlobalExceptionHandler {
                 .reduce((a, b) -> a + "; " + b)
                 .orElse(null);
 
+        log.warn("Validation failed: {} | detail: {}", message, detail);
         return buildResponse(HttpStatus.BAD_REQUEST, message, detail);
     }
 
@@ -120,6 +128,7 @@ public class GlobalExceptionHandler {
                 .map(cv -> cv.getMessage())
                 .orElse("Constraint violation");
 
+        log.warn("ConstraintViolation: {}", message);
         return buildResponse(HttpStatus.BAD_REQUEST, message);
     }
 
@@ -183,6 +192,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse.ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
+        log.warn("IllegalArgumentException: {}", ex.getMessage());
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 

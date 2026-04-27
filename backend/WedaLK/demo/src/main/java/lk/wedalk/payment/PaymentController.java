@@ -8,6 +8,8 @@ import lk.wedalk.requests.dto.RequestResponse;
 import lk.wedalk.requests.service.ServiceRequestService;
 import lk.wedalk.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
@@ -33,6 +35,8 @@ import java.util.Map;
 @CrossOrigin(origins = "http://localhost:3000")
 public class PaymentController {
 
+    private static final Logger log = LoggerFactory.getLogger(PaymentController.class);
+
     private final ServiceRequestService serviceRequestService;
     private final WorkerProfileService workerProfileService;
     private final UserRepository userRepository;
@@ -41,8 +45,10 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<RequestResponse>> uploadRequestPaymentSlip(
             @PathVariable Long requestId,
             @RequestParam("slip") MultipartFile slip) {
+        log.info("Uploading payment slip for request: requestId={}", requestId);
         RequestResponse response = serviceRequestService.uploadRequestPaymentSlip(
                 requestId, requireCurrentUserId(), slip);
+        log.info("Payment slip uploaded for request: requestId={}", requestId);
         return ResponseEntity.ok(ApiResponse.success(response, "Payment slip uploaded. Your request is now published."));
     }
 
@@ -50,8 +56,10 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<WorkerProfileResponse>> uploadProfilePaymentSlip(
             @PathVariable Long profileId,
             @RequestParam("slip") MultipartFile slip) {
+        log.info("Uploading payment slip for profile: profileId={}", profileId);
         WorkerProfileResponse response = workerProfileService.uploadProfilePaymentSlip(
                 profileId, requireCurrentUserId(), slip);
+        log.info("Payment slip uploaded for profile: profileId={}", profileId);
         return ResponseEntity.ok(ApiResponse.success(
                 response,
                 "Payment slip received. Your profile will become active after an administrator approves the payment."));
@@ -71,6 +79,7 @@ public class PaymentController {
     @PostMapping("/admin/profiles/{profileId}/payment-approve")
     public ResponseEntity<ApiResponse<WorkerProfileResponse>> approveProfileRegistrationPayment(
             @PathVariable Long profileId) {
+        log.info("Admin approving profile payment: profileId={}", profileId);
         WorkerProfileResponse response =
                 workerProfileService.approveProfileRegistrationPayment(profileId, requireCurrentUserId());
         return ResponseEntity.ok(
@@ -81,6 +90,7 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<WorkerProfileResponse>> rejectProfileRegistrationPayment(
             @PathVariable Long profileId,
             @RequestBody(required = false) Map<String, String> body) {
+        log.info("Admin rejecting profile payment: profileId={}", profileId);
         String reason = (body != null) ? body.get("reason") : null;
         WorkerProfileResponse response = workerProfileService.rejectProfileRegistrationPayment(
                 profileId, requireCurrentUserId(), reason);
@@ -115,6 +125,7 @@ public class PaymentController {
 
     @PostMapping("/admin/requests/{requestId}/payment-approve")
     public ResponseEntity<ApiResponse<RequestResponse>> approvePaymentSlip(@PathVariable Long requestId) {
+        log.info("Admin approving request payment: requestId={}", requestId);
         RequestResponse response = serviceRequestService.approvePaymentSlip(requestId, requireCurrentUserId());
         return ResponseEntity.ok(ApiResponse.success(response, "Payment approved. Request is now published."));
     }
@@ -123,6 +134,7 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<RequestResponse>> rejectPaymentSlip(
             @PathVariable Long requestId,
             @RequestBody(required = false) Map<String, String> body) {
+        log.info("Admin rejecting request payment: requestId={}", requestId);
         String reason = (body != null) ? body.get("reason") : null;
         RequestResponse response = serviceRequestService.rejectPaymentSlip(requestId, requireCurrentUserId(), reason);
         return ResponseEntity.ok(ApiResponse.success(response, "Payment rejected. Seeker must re-upload a valid slip."));

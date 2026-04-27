@@ -6,6 +6,8 @@ import lk.wedalk.common.ApiResponse;
 import lk.wedalk.users.dto.UserDto;
 import lk.wedalk.users.model.Role;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = "http://localhost:3000")
 public class AdminController {
 
+  private static final Logger log = LoggerFactory.getLogger(AdminController.class);
+
   private final AdminService adminService;
 
   @GetMapping("/users")
@@ -28,7 +32,9 @@ public class AdminController {
       @RequestParam(required = false) String search,
       @RequestParam(required = false) Role role,
       @RequestParam(required = false) String status) {
+    log.debug("Admin listing users: search='{}', role={}, status='{}'", search, role, status);
     List<UserDto> users = adminService.getAllUsers(search, role, status);
+    log.debug("Admin listed {} users", users.size());
     return ResponseEntity.ok(ApiResponse.success(users, "Users retrieved successfully"));
   }
 
@@ -43,10 +49,12 @@ public class AdminController {
    */
   @PatchMapping("/users/{id}/status")
   public ResponseEntity<ApiResponse<UserDto>> toggleUserStatus(@PathVariable Long id) {
+    log.info("Admin toggling user status: userId={}", id);
     UserDto updated = adminService.toggleUserStatus(id);
     String message = Boolean.TRUE.equals(updated.getIsSuspended())
         ? "User account deactivated successfully."
         : "User account reactivated successfully.";
+    log.info("User status toggled: userId={}, suspended={}", id, updated.getIsSuspended());
     return ResponseEntity.ok(ApiResponse.success(updated, message));
   }
 }

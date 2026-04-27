@@ -16,6 +16,8 @@ import lk.wedalk.requests.service.AiDescriptionService;
 import lk.wedalk.requests.service.ServiceRequestService;
 import lk.wedalk.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -36,6 +38,8 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "http://localhost:3000") // Allow frontend access
 public class ServiceRequestController {
 
+  private static final Logger log = LoggerFactory.getLogger(ServiceRequestController.class);
+
   private final ServiceRequestService serviceRequestService;
   private final AiDescriptionService aiDescriptionService;
   private final UserRepository userRepository;
@@ -51,7 +55,10 @@ public class ServiceRequestController {
 
   @PostMapping
   public ResponseEntity<ApiResponse<RequestResponse>> createRequest(@Valid @RequestBody RequestCreateRequest request) {
-    RequestResponse response = serviceRequestService.createRequest(requireCurrentUserId(), request);
+    Long userId = requireCurrentUserId();
+    log.info("Creating service request: userId={}, title='{}', category={}", userId, request.getTitle(), request.getCategory());
+    RequestResponse response = serviceRequestService.createRequest(userId, request);
+    log.info("Service request created: id={}", response.getId());
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success(response, "Service request created successfully"));
   }
@@ -59,7 +66,9 @@ public class ServiceRequestController {
   @PostMapping("/ai-description")
   public ResponseEntity<ApiResponse<AiDescriptionResponse>> generateAiDescription(
       @Valid @RequestBody AiDescriptionRequest request) {
+    log.info("AI description generation requested for title='{}'", request.getTitle());
     String draft = aiDescriptionService.generateDescription(request);
+    log.info("AI description generated successfully");
     return ResponseEntity.ok(ApiResponse.success(
         new AiDescriptionResponse(draft),
         "AI description generated successfully"));
@@ -73,7 +82,9 @@ public class ServiceRequestController {
 
   @GetMapping("/open")
   public ResponseEntity<ApiResponse<List<RequestResponse>>> getOpenRequests() {
+    log.debug("Fetching open requests");
     List<RequestResponse> requests = serviceRequestService.getOpenRequests();
+    log.debug("Returned {} open requests", requests.size());
     return ResponseEntity.ok(ApiResponse.success(requests, "Open requests retrieved successfully"));
   }
 
@@ -85,6 +96,8 @@ public class ServiceRequestController {
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "9") int size,
       @RequestParam(defaultValue = "newest") String sortBy) {
+    log.debug("Browse requests: keyword='{}', category={}, location='{}', page={}, size={}, sort={}",
+        keyword, category, locationArea, page, size, sortBy);
     PagedResponse<RequestResponse> response = serviceRequestService.browseOpenRequests(
         keyword, category, locationArea, page, size, sortBy);
     return ResponseEntity.ok(ApiResponse.success(response, "Browse results retrieved successfully"));
@@ -92,6 +105,7 @@ public class ServiceRequestController {
 
   @GetMapping("/{id}")
   public ResponseEntity<ApiResponse<RequestResponse>> getRequestById(@PathVariable Long id) {
+    log.debug("Fetching request by id={}", id);
     RequestResponse request = serviceRequestService.getRequestById(id);
     return ResponseEntity.ok(ApiResponse.success(request, "Request retrieved successfully"));
   }
@@ -121,7 +135,9 @@ public class ServiceRequestController {
   public ResponseEntity<ApiResponse<RequestResponse>> updateRequest(
       @PathVariable Long id,
       @Valid @RequestBody RequestCreateRequest request) {
+    log.info("Updating service request: id={}", id);
     RequestResponse response = serviceRequestService.updateRequest(id, requireCurrentUserId(), request);
+    log.info("Service request updated: id={}", id);
     return ResponseEntity.ok(ApiResponse.success(response, "Service request updated successfully"));
   }
 
@@ -141,7 +157,9 @@ public class ServiceRequestController {
 
   @DeleteMapping("/{id}")
   public ResponseEntity<ApiResponse<Void>> deleteRequest(@PathVariable Long id) {
+    log.info("Deleting service request: id={}", id);
     serviceRequestService.deleteRequest(id, requireCurrentUserId());
+    log.info("Service request deleted: id={}", id);
     return ResponseEntity.ok(ApiResponse.success(null, "Service request deleted successfully"));
   }
 }
