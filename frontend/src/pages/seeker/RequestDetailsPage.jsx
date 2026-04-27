@@ -262,6 +262,10 @@ const RequestDetailsPage = () => {
       setReviewError('Please select a star rating to submit your review');
       return;
     }
+    if ((reviewComment || '').length > 500) {
+      setReviewError('Comment must be 500 characters or fewer.');
+      return;
+    }
 
     setReviewSubmitting(true);
     setReviewError('');
@@ -289,6 +293,10 @@ const RequestDetailsPage = () => {
     e.preventDefault();
     if (!notCompletedReason.trim()) {
       setNotCompletedReasonError('Please provide a reason so our admins can assist you.');
+      return;
+    }
+    if ((notCompletedReason || '').length > 1000) {
+      setNotCompletedReasonError('Reason must be 1000 characters or fewer.');
       return;
     }
     setNotCompletedReasonError('');
@@ -720,8 +728,10 @@ const RequestDetailsPage = () => {
                         value={reviewComment}
                         onChange={(e) => setReviewComment(e.target.value)}
                         placeholder="Describe your experience with the worker..."
+                        maxLength={500}
                         className="w-full rounded-card border border-line bg-surface-muted/70 px-4 py-3 text-sm text-ink placeholder-ink-muted focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
                       />
+                      <p className="mt-2 text-xs font-semibold text-ink-muted">{reviewComment.length} / 500</p>
                     </div>
 
                     <ErrorBanner message={reviewError} />
@@ -931,9 +941,11 @@ const RequestDetailsPage = () => {
                   value={notCompletedReason}
                   onChange={(e) => { setNotCompletedReason(e.target.value); if (notCompletedReasonError) setNotCompletedReasonError(''); }}
                   placeholder="Explain what went wrong or why the job was not completed as expected..."
+                  maxLength={1000}
                   className={`w-full rounded-card border bg-surface-muted/70 px-4 py-3 text-sm text-ink placeholder-ink-muted focus:outline-none focus:ring-2 focus:ring-brand-200 ${notCompletedReasonError ? 'border-red-400 focus:border-red-400' : 'border-line focus:border-brand-400'}`}
                   autoFocus
                 />
+                <p className="mt-2 text-xs font-semibold text-ink-muted">{notCompletedReason.length} / 1000</p>
                 {/* AC2: Inline validation error */}
                 {notCompletedReasonError ? (
                   <p className="mt-2 flex items-center gap-1.5 text-sm text-red-600">

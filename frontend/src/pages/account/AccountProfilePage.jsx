@@ -5,6 +5,7 @@ import { clearAuth } from '../../utils/storage';
 import { deleteMyAccount, getMyAccount, updateMyAccount } from '../../services/userService';
 import AuthShell from '../../components/ui/AuthShell';
 import ErrorBanner from '../../components/common/ErrorBanner';
+import { isMaxLength, isValidEmail, isValidPhone } from '../../utils/validators';
 
 const AccountProfilePage = () => {
   const navigate = useNavigate();
@@ -62,6 +63,21 @@ const AccountProfilePage = () => {
     event.preventDefault();
     if (!formData.fullName.trim()) {
       setMessage('Name is required');
+      return;
+    }
+    const emailErr = isValidEmail(formData.email, 'Use a valid email address (e.g., name@example.com).');
+    if (emailErr) {
+      setMessage(emailErr);
+      return;
+    }
+    const phoneErr = isValidPhone(formData.phoneNumber);
+    if (phoneErr) {
+      setMessage(phoneErr);
+      return;
+    }
+    const districtErr = isMaxLength(formData.district, 100, 'District must be 100 characters or fewer.');
+    if (districtErr) {
+      setMessage(districtErr);
       return;
     }
 

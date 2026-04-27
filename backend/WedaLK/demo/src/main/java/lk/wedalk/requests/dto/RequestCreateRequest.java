@@ -1,7 +1,9 @@
 package lk.wedalk.requests.dto;
 
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lk.wedalk.common.enums.ServiceCategory;
 import lk.wedalk.common.enums.UrgencyLevel;
@@ -24,7 +26,7 @@ public class RequestCreateRequest {
     private String title;
 
     @NotBlank(message = "Description is required")
-    @Size(max = 2000, message = "Description must not exceed 2000 characters")
+    @Size(min = 20, max = 2000, message = "Description must be between 20 and 2000 characters")
     private String description;
 
   @NotNull(message = "Category is required")
@@ -34,6 +36,9 @@ public class RequestCreateRequest {
   @Size(max = 100, message = "Location area must not exceed 100 characters")
   private String locationArea;
 
+    @NotNull(message = "Budget is required")
+    @PositiveOrZero(message = "Budget must be zero or a positive amount")
+    @DecimalMax(value = "10000000", message = "Budget is too large")
     private Double budget;
 
     private UrgencyLevel urgency; // Optional, defaults to MEDIUM in service layer

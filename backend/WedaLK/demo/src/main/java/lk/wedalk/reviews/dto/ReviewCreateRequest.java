@@ -3,6 +3,8 @@ package lk.wedalk.reviews.dto;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,6 +21,7 @@ import lombok.NoArgsConstructor;
 public class ReviewCreateRequest {
 
     @NotNull(message = "Request ID is required")
+    @Positive(message = "Request ID must be valid")
     private Long requestId;
 
     @NotNull(message = "Please select a star rating to submit your review")
@@ -26,5 +29,6 @@ public class ReviewCreateRequest {
     @Max(value = 5, message = "Rating must be at most 5")
     private Integer rating;
 
+    @Size(max = 500, message = "Comment must be 500 characters or fewer")
     private String comment;
 }

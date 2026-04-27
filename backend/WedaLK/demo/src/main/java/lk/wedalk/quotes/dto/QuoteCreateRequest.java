@@ -19,6 +19,7 @@ public class QuoteCreateRequest {
 
     /** The service request this quote targets. */
     @NotNull(message = "Request ID is required")
+    @Positive(message = "Request ID must be valid")
     private Long requestId;
 
     /**
