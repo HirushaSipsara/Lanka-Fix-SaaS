@@ -5,6 +5,7 @@ import { createProfile, getProfileById, updateProfile, uploadProfilePaymentSlip 
 import { CATEGORIES, DISTRICTS, SERVING_AREAS } from '../../utils/constants';
 import { AlertPanel, LoadingPanel, PageIntro } from '../../components/ui/PortalPrimitives';
 import { useToast } from '../../components/common/ToastContext';
+import { isNonNegativeNumber, isRequired, isValidPhone, validateForm } from '../../utils/validators';
 
 const PAYMENT_DETAILS = {
   amount: 500,
@@ -21,6 +22,7 @@ const EditWorkerProfilePage = () => {
   const [loading, setLoading] = useState(false);
   const [fetchingProfile, setFetchingProfile] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [paymentSlip, setPaymentSlip] = useState(null);
   const [paymentSlipPreview, setPaymentSlipPreview] = useState('');
   const [slipError, setSlipError] = useState('');
@@ -119,6 +121,9 @@ const EditWorkerProfilePage = () => {
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name && fieldErrors[name]) {
+      setFieldErrors((prev) => ({ ...prev, [name]: '' }));
+    }
   };
 
   const handlePhotoChange = (event) => {
@@ -140,15 +145,81 @@ const EditWorkerProfilePage = () => {
   const handleSlipChange = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    setPaymentSlip(file);
     setSlipError('');
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = () => setPaymentSlipPreview(reader.result);
-      reader.readAsDataURL(file);
-    } else {
-      setPaymentSlipPreview('pdf');
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    const maxSizeBytes = 5 * 1024 * 1024;
+
+    if (!allowedTypes.includes(file.type)) {
+      setPaymentSlip(null);
+      setPaymentSlipPreview('');
+      setSlipError('Please upload a JPG, PNG, or PDF file.');
+      event.target.value = '';
+      return;
     }
+
+    if (file.size > maxSizeBytes) {
+      setPaymentSlip(null);
+      setPaymentSlipPreview('');
+      setSlipError('Transfer slip must be 5 MB or smaller.');
+      event.target.value = '';
+      return;
+    }
+
+    setPaymentSlip(file);
+    if (file.type === 'application/pdf') {
+      setPaymentSlipPreview('pdf');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => setPaymentSlipPreview(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const validateClientSide = () => {
+    const resolvedPhone = (formData.contactNumber || '').trim() || (getCurrentUser()?.phoneNumber || '').trim();
+    const next = validateForm(
+      {
+        fullName: formData.fullName,
+        contactNumber: resolvedPhone,
+        bio: formData.bio,
+        district: formData.district,
+        hourlyRate: formData.hourlyRate,
+        availability: formData.availability,
+      },
+      {
+        fullName: [(v) => isRequired(v, 'Full name is required.')],
+        contactNumber: [
+          (v) => isRequired(v, 'Contact number is required.'),
+          (v) => isValidPhone(v, 'Use a valid phone number (e.g., 0771234567).'),
+        ],
+        bio: [(v) => isRequired(v, 'Bio is required.')],
+        district: [(v) => isRequired(v, 'Please select your base district.')],
+        hourlyRate: [
+          (v) => isRequired(v, 'Hourly rate is required.'),
+          (v) => isNonNegativeNumber(v, 'Hourly rate cannot be negative.'),
+        ],
+        availability: [(v) => isRequired(v, 'Please select your availability.')],
+      },
+    );
+
+    // Multi-select checks (kept as they drive UI buttons).
+    if (formData.primaryCategories.length === 0) {
+      next.primaryCategories = 'Please select at least one primary service category.';
+    }
+    if (formData.serviceAreas.length === 0) {
+      next.serviceAreas = 'Please select at least one service area.';
+    }
+
+    // Numeric parsing sanity check
+    const hourlyRateNumber = Number(String(formData.hourlyRate ?? '').trim());
+    if (!Number.isFinite(hourlyRateNumber)) {
+      next.hourlyRate = 'Hourly rate must be a valid number.';
+    }
+
+    setFieldErrors(next);
+    return { ok: Object.keys(next).filter((k) => next[k]).length === 0, resolvedPhone, hourlyRateNumber };
   };
 
   const handleSubmit = async (event) => {
@@ -156,22 +227,11 @@ const EditWorkerProfilePage = () => {
     setLoading(true);
     setError('');
     setSlipError('');
+    setFieldErrors({});
 
-    if (formData.primaryCategories.length === 0) {
-      setError('Please select at least one primary service category');
-      setLoading(false);
-      return;
-    }
-
-    if (formData.serviceAreas.length === 0) {
-      setError('Please select at least one service area');
-      setLoading(false);
-      return;
-    }
-
-    const resolvedPhone = (formData.contactNumber || '').trim() || (getCurrentUser()?.phoneNumber || '').trim();
-    if (!resolvedPhone) {
-      setError('Please enter a contact number.');
+    const validated = validateClientSide();
+    if (!validated.ok) {
+      setError('Please correct the highlighted fields before submitting.');
       setLoading(false);
       return;
     }
@@ -185,13 +245,13 @@ const EditWorkerProfilePage = () => {
 
     const payload = {
       fullName: formData.fullName,
-      contactNumber: resolvedPhone,
+      contactNumber: validated.resolvedPhone,
       bio: formData.bio,
       profilePictureUrl: formData.profilePictureUrl || null,
       skills: [...formData.primaryCategories, ...formData.specificSkills],
       district: formData.district,
       serviceAreas: formData.serviceAreas,
-      hourlyRate: parseFloat(formData.hourlyRate),
+      hourlyRate: validated.hourlyRateNumber,
       availability: formData.availability,
     };
 
@@ -296,15 +356,18 @@ const EditWorkerProfilePage = () => {
               <div className="ui-field">
                 <label className="ui-label">Full Name</label>
                 <input type="text" name="fullName" value={formData.fullName} onChange={handleChange} className="ui-input" placeholder="e.g. Ruwan Perera" required />
+                {fieldErrors.fullName ? <p className="ui-error-text">{fieldErrors.fullName}</p> : null}
               </div>
               <div className="ui-field">
                 <label className="ui-label">Contact Number</label>
                 <input type="tel" name="contactNumber" value={formData.contactNumber} onChange={handleChange} className="ui-input" placeholder="+94 77 123 4567" autoComplete="tel" />
                 <p className="ui-helper">Pre-filled from your account when you sign up. You can change it here if needed.</p>
+                {fieldErrors.contactNumber ? <p className="ui-error-text">{fieldErrors.contactNumber}</p> : null}
               </div>
               <div className="ui-field md:col-span-2">
                 <label className="ui-label">Professional Bio</label>
                 <textarea name="bio" value={formData.bio} onChange={handleChange} className="ui-textarea" placeholder="Briefly describe your experience and the quality of work you provide..." required />
+                {fieldErrors.bio ? <p className="ui-error-text">{fieldErrors.bio}</p> : null}
               </div>
             </div>
           </section>
@@ -330,6 +393,7 @@ const EditWorkerProfilePage = () => {
                     );
                   })}
                 </div>
+                {fieldErrors.primaryCategories ? <p className="mt-3 ui-error-text">{fieldErrors.primaryCategories}</p> : null}
               </div>
 
               <div className="ui-field">
@@ -377,6 +441,7 @@ const EditWorkerProfilePage = () => {
                   <span className="text-sm font-semibold text-ink-subtle">Rs.</span>
                   <input type="number" name="hourlyRate" value={formData.hourlyRate} onChange={handleChange} min="0" step="0.01" placeholder="1500" required />
                 </div>
+                {fieldErrors.hourlyRate ? <p className="ui-error-text">{fieldErrors.hourlyRate}</p> : null}
               </div>
               <div className="ui-field">
                 <label className="ui-label">Availability</label>
@@ -388,6 +453,7 @@ const EditWorkerProfilePage = () => {
                   <option value="Evenings">Evenings</option>
                   <option value="Negotiable">Negotiable</option>
                 </select>
+                {fieldErrors.availability ? <p className="ui-error-text">{fieldErrors.availability}</p> : null}
               </div>
             </div>
           </section>
@@ -403,6 +469,7 @@ const EditWorkerProfilePage = () => {
                     <option key={district} value={district}>{district}</option>
                   ))}
                 </select>
+                {fieldErrors.district ? <p className="ui-error-text">{fieldErrors.district}</p> : null}
               </div>
 
               {formData.district && availableServiceAreas.length > 0 ? (
@@ -432,6 +499,7 @@ const EditWorkerProfilePage = () => {
                       Your selected areas help seekers understand exactly where you work.
                     </p>
                   </div>
+                  {fieldErrors.serviceAreas ? <p className="mt-3 ui-error-text">{fieldErrors.serviceAreas}</p> : null}
                 </div>
               ) : null}
             </div>

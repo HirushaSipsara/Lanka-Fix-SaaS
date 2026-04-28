@@ -10,6 +10,7 @@ import { CATEGORIES, formatBudget } from '../../utils/constants';
 import { getApiErrorMessage } from '../../utils/formValidationMessages';
 import { AlertPanel, PageIntro, SectionCard, StatusPill } from '../../components/ui/PortalPrimitives';
 import ErrorBanner from '../../components/common/ErrorBanner';
+import { isNonNegativeNumber, isRequired, validateForm } from '../../utils/validators';
 
 const urgencyOptions = [
   { value: 'LOW', label: 'Low', subtitle: 'Within a week', icon: '📅', tone: 'info', hint: 'Flexible timing' },
@@ -84,6 +85,12 @@ const CreateRequestPage = () => {
     budget: requestToEdit?.budget || '',
   });
 
+  const parseBudget = (value) => {
+    if (value === '' || value === null || typeof value === 'undefined') return null;
+    const n = Number(String(value).trim());
+    return Number.isFinite(n) ? n : NaN;
+  };
+
   useEffect(() => {
     if (isEditMode) {
       setCurrentStep(1);
@@ -104,11 +111,23 @@ const CreateRequestPage = () => {
       else if (formData.title.trim().length > 150) nextErrors.title = 'Title must not exceed 150 characters';
       if (!formData.category) nextErrors.category = 'Please select a category';
       if (!formData.locationArea.trim()) nextErrors.locationArea = 'Location is required';
+      else if (formData.locationArea.trim().length > 100) nextErrors.locationArea = 'Location must not exceed 100 characters';
     }
     if (step === 2) {
       if (!formData.description.trim()) nextErrors.description = 'Description is required';
       else if (formData.description.trim().length < 20) nextErrors.description = 'Description must be at least 20 characters';
       else if (formData.description.length > DESCRIPTION_LIMIT) nextErrors.description = 'Description must not exceed 2000 characters';
+
+      const budgetErrors = validateForm(
+        { budget: formData.budget },
+        {
+          budget: [
+            (v) => isRequired(v, 'Please provide a budget for your request.'),
+            (v) => isNonNegativeNumber(v, 'Budget cannot be negative.'),
+          ],
+        },
+      );
+      if (budgetErrors.budget) nextErrors.budget = budgetErrors.budget;
     }
 
     setErrors(nextErrors);
@@ -224,6 +243,13 @@ const CreateRequestPage = () => {
   };
 
   const handleSubmit = async () => {
+    const budgetNumber = parseBudget(formData.budget);
+    if (Number.isNaN(budgetNumber)) {
+      setErrors((prev) => ({ ...prev, budget: 'Budget must be a valid number.' }));
+      setError('Please correct the highlighted fields before continuing.');
+      return;
+    }
+
     if (isEditMode) {
       if (!formData.title || !formData.description || !formData.locationArea || !formData.category || !formData.urgency) {
         setError('Please fill in all required details before submitting.');
@@ -238,7 +264,7 @@ const CreateRequestPage = () => {
           locationArea: formData.locationArea,
           description: formData.description,
           urgency: formData.urgency,
-          budget: formData.budget,
+          budget: budgetNumber,
         };
         await updateRequest(requestToEdit.id, payload);
         setSuccess(true);
@@ -257,7 +283,7 @@ const CreateRequestPage = () => {
         setError('Please fill in all required details before submitting.');
         return;
       }
-      if (!formData.budget && formData.budget !== 0) {
+      if (budgetNumber === null) {
         setError('Please provide a budget for your request.');
         return;
       }
@@ -281,7 +307,7 @@ const CreateRequestPage = () => {
         locationArea: formData.locationArea,
         description: formData.description,
         urgency: formData.urgency,
-        budget: formData.budget,
+        budget: budgetNumber,
       };
       const created = await createRequest(payload);
       await uploadRequestPaymentSlip(created.id, paymentSlip);
@@ -621,6 +647,7 @@ const CreateRequestPage = () => {
                       min="0"
                     />
                   </div>
+                  {errors.budget ? <p className="ui-error-text">{errors.budget}</p> : null}
                 </div>
               </div>
             ) : null}

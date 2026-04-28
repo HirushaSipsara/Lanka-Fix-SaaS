@@ -6,6 +6,7 @@ import { createBooking } from '../../services/bookingService';
 import { PageIntro, LoadingPanel } from '../../components/ui/PortalPrimitives';
 import ErrorBanner from '../../components/common/ErrorBanner';
 import { useToast } from '../../components/common/ToastContext';
+import { isMaxLength, isRequired } from '../../utils/validators';
 
 const BookWorkerPage = () => {
   const { profileId } = useParams();
@@ -52,9 +53,23 @@ const BookWorkerPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
-    if (!bookingDate || !startTime || !endTime) {
-      setFormError('Please choose a date, start time, and end time.');
+    const dateErr = isRequired(bookingDate, 'Please choose a booking date.');
+    const startErr = isRequired(startTime, 'Please choose a start time.');
+    const endErr = isRequired(endTime, 'Please choose an end time.');
+    const noteErr = isMaxLength(note, 500, 'Note must be 500 characters or fewer.');
+    if (dateErr || startErr || endErr || noteErr) {
+      setFormError(dateErr || startErr || endErr || noteErr);
       return;
+    }
+
+    const today = new Date();
+    const selectedDate = new Date(`${bookingDate}T00:00:00`);
+    if (Number.isFinite(selectedDate.getTime())) {
+      const todayMidnight = new Date(today.toISOString().slice(0, 10));
+      if (selectedDate < todayMidnight) {
+        setFormError('Booking date cannot be in the past.');
+        return;
+      }
     }
     if (startTime >= endTime) {
       setFormError('End time must be after start time.');
