@@ -1,6 +1,7 @@
 resource "aws_ecr_repository" "backend" {
   name                 = "lankafix-backend"
   image_tag_mutability = "MUTABLE"
+  force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = true
@@ -15,6 +16,7 @@ resource "aws_ecr_repository" "backend" {
 resource "aws_ecr_repository" "frontend" {
   name                 = "lankafix-frontend"
   image_tag_mutability = "MUTABLE"
+  force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = true
