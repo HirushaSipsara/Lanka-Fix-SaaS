@@ -24,10 +24,12 @@ jobs:
           cache: maven
 
       - name: Make Maven wrapper executable
-        run: chmod +x ./backend/WedaLK/demo/mvnw
+        run: chmod +x ./mvnw
+        working-directory: ./backend/WedaLK/demo
 
       - name: Run Maven tests
-        run: ./backend/WedaLK/demo/mvnw test
+        run: ./mvnw test
+        working-directory: ./backend/WedaLK/demo
 
   frontend-checks:
     name: Frontend - Lint and Tests
