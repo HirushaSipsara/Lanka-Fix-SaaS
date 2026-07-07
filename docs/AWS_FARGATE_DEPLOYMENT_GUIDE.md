@@ -276,3 +276,49 @@ These are the exact issues resolved during implementation:
   git push origin main
   ```
   *Make sure `.gitignore` correctly ignores `terraform/.terraform/`.*
+
+---
+
+## 8. Future Improvements: AWS Secrets Manager Integration
+
+Currently, the database password (`db_password`) is passed to the ECS Task Definition as a plain environment variable. For a production-grade university project submission, we can secure this sensitive data using **AWS Secrets Manager**.
+
+### Proposed Upgrade Path:
+
+1. **Store Secrets in AWS Secrets Manager:**
+   Configure a secret resource in Terraform:
+   ```hcl
+   resource "aws_secretsmanager_secret" "db_password" {
+     name = "lankafix-db-password"
+   }
+
+   resource "aws_secretsmanager_secret_version" "db_password_val" {
+     secret_id     = aws_secretsmanager_secret.db_password.id
+     secret_string = var.db_password
+   }
+   ```
+
+2. **Reference the Secret inside the ECS Task Definition:**
+   Instead of using direct environment value Injection:
+   ```hcl
+   # Old plain-text method
+   { name = "DB_PASSWORD", value = var.db_password }
+   ```
+   Reference the secret value via its ARN:
+   ```hcl
+   # Secure method using Secrets Manager
+   secrets = [{
+     name      = "DB_PASSWORD"
+     valueFrom = aws_secretsmanager_secret.db_password.arn
+   }]
+   ```
+
+3. **Grant IAM Permissions:**
+   Ensure the ECS Task Execution Role (`ecs_execution_role`) has permissions to retrieve secret values:
+   ```hcl
+   statement {
+     actions   = ["secretsmanager:GetSecretValue"]
+     resources = [aws_secretsmanager_secret.db_password.arn]
+   }
+   ```
+
