@@ -219,12 +219,28 @@ Go to your repository settings -> **Secrets and variables** -> **Actions** -> Ad
 - `AWS_REGION` (`us-east-1`)
 
 ### Deployment Pipeline Workflow:
-1. **Checkout:** Pulls down the code.
-2. **AWS Auth:** Logs into AWS using GitHub secrets.
-3. **Build & Tag:** Compiles Java and React assets into Docker images, tags them with the git commit SHA.
-4. **Push ECR:** Pushes new tagged images to ECR.
-5. **Update Task Defs:** Registers a new task revision pointing to the new images.
-6. **ECS Deploy:** Triggers a rolling update on Fargate.
+
+The workflow contains three stages:
+
+1. **Backend Checks (CI Job):**
+   - Checks out repository.
+   - Sets up JDK 17 with Maven caching.
+   - Makes the Maven wrapper executable and runs Maven test suite (`./mvnw test`).
+2. **Frontend Checks (CI Job):**
+   - Checks out repository.
+   - Sets up Node.js 18 with npm caching.
+   - Installs dependencies using clean-install (`npm ci`).
+   - Runs ESLint code style analysis (`npm run lint`).
+   - Runs React frontend unit test suite (`npm test -- --watchAll=false --passWithNoTests`).
+3. **Build, Push, and Deploy (CD Job):**
+   - Runs **only** if both `backend-checks` and `frontend-checks` jobs complete successfully (`needs` requirement).
+   - Authenticates to AWS using GitHub Secrets.
+   - Builds backend and frontend Docker containers (injecting relative `/api` path variable).
+   - Tags the images with the git commit SHA and `latest`.
+   - Pushes both images to their respective AWS ECR repositories.
+   - Dynamically downloads active ECS task definition JSONs from AWS.
+   - Updates the task definitions with the new image tags and registers new task definition revisions.
+   - Performs a zero-downtime rolling update on the ECS Fargate cluster.
 
 ---
 
