@@ -37,7 +37,6 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 @RequestMapping("/api/disputes")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class DisputeController {
 
     private final DisputeService disputeService;

@@ -63,7 +63,7 @@ public class SecurityConfig {
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .authorizeHttpRequests(auth -> auth
             .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
-            .requestMatchers("/api/auth/**", "/api/health").permitAll()
+            .requestMatchers("/api/auth/**", "/api/health", "/actuator/**").permitAll()
             .requestMatchers(HttpMethod.PUT, "/api/verification/*/status").hasRole("ADMIN")
             .requestMatchers(HttpMethod.GET, "/api/verification/*/document").hasRole("ADMIN")
             .requestMatchers(HttpMethod.PUT, "/api/disputes/*/resolve").hasRole("ADMIN")

@@ -25,3 +25,11 @@ docs/.DS_Store
 
 .env
 .cursor
+
+# Terraform
+terraform/.terraform/
+terraform/terraform.tfvars
+terraform/*.tfplan
+terraform/tfplan
+terraform/*.tfstate
+terraform/*.tfstate.backup

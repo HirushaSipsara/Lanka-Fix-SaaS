@@ -59,8 +59,8 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: lankafix-frontend
           IMAGE_TAG: ${{ github.sha }}
-          # The ALB Endpoint (e.g. http://lankafix-alb-12345.us-east-1.elb.amazonaws.com/api)
-          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+          # Use relative API path routed via ALB path-based rules
+          REACT_APP_API_URL: /api
         run: |
           docker build \
             --build-arg REACT_APP_API_URL=$REACT_APP_API_URL \

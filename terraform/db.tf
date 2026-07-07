@@ -15,8 +15,8 @@ resource "aws_db_instance" "postgres" {
   allocated_storage      = 20
   max_allocated_storage  = 100
   engine                 = "postgres"
-  engine_version         = "15"
-  instance_class         = "db.t4g.micro" # Free Tier eligible
+  engine_version         = "15.7"
+  instance_class         = "db.t3.micro" # Free Tier eligible
   db_name                = "lankafix"
   username               = "postgres"
   password               = var.db_password
